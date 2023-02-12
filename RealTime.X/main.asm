@@ -16,12 +16,7 @@ Point	EQU 0x73		; Program table pointer
 TEMP	EQU 0x75		; Temp store
 TEMP2	EQU 0x76		; Temp2 store
 
-
-counter	EQU 0x20	; Counter register
-counterBlink	EQU 0x21; counter FOR Blinking register
-
-LCD_CSR	EQU 0x22; LCD_CSR register
-Location	EQU 0xC0; counter for LCD_CSR
+LCD_CUSROR	EQU 0x22; LCD_CUSROR register
 blinkDelay	EQU 0x50; Delay time for cursor blink :can be adjusted as needed
 
 CSR_LOC		EQU D'124'	; CSR_LOC: "  |  "
@@ -140,18 +135,13 @@ START_EXECUTION
 	CALL SETUP_INTERRUPTS
 	CALL SETUP_PORTS_DIGITAL
 
-   
-	MOVLW	0x5		; Load initial value of 5 into W
-	MOVWF	counter		; Store the value in the counter register
-
-	MOVLW	Location	; Load initial value of Location into W
-	MOVWF	LCD_CSR	; Store the value in the LCD_CSR register
+	MOVWF	LCD_CUSROR	; Store the value in the LCD_CUSROR register
 
 	MOVLW	ACHAR		; Load initial value of char 'A' To W
 	MOVWF	currentCharReg	; Store the value in the currentCharReg register
 
 	CALL	SETUP_LCD ; Initialise the display FOR LCD
-	CALL	WritePromptToLCD
+	CALL	LCD_WRITE_PROMPT
 
 
 	CALL	LABEL_REACH ; announce reaching this line
@@ -299,7 +289,7 @@ PulseWriteCharToLCD
     call PULSE_LCD_E_PIN 
     RETURN
 
-WritePromptToLCD 
+LCD_WRITE_PROMPT 
 
 	MOVLW	0x80		; move cursor to first line, first column
 	CALL	PulseWriteCmdToLCD ; send command
