@@ -158,29 +158,6 @@ START_EXECUTION
 
 
 
-
-; Main loop of 5 iterations
-MAIN
-	DECFSZ	counter, F	; Decrement the counter register and skip next instruction if non-zero
-	CALL	LOOPTOLOCATION	; Loop senario
-	MOVF	counter, W	; Load the value of the file register counter into the W register
-	BTFSC	STATUS, Z
-	CALL	MovingSTRING	
-	;GOTO	MAIN		; Loop back if the value is non-zero
-	GOTO 	DONE			; End of program
-
-MovingSTRING
-	MOVLW 0x80    ; move cursor to first line, first column
-	ANDLW 0x0F ; Mask the lower 4 bits
-	BTFSC STATUS, Z ; If the lower 4 bits are 0, skip the next instruction
-	CALL MOVELEFTONLCD ; If the lower 4 bits are not 0, call the MOVELEFTONLCD routine
-	CALL MOVERIGHTONLCD ; Call the MOVERIGHTONLCD routine
-
-ENDMOVING	
-	MOVLW	D'5'		; Load 5 into W
-	MOVWF	counter		; Store the value 5 to the counter register to start again
-	CALL	WritePromptToLCD
-
 ; used to announce reaching a section of the code
 LABEL_REACH
 
@@ -219,289 +196,6 @@ loop_start
 	DECFSZ	TEMP
 	GOTO	loop_start
 	RETURN
-
-MOVERIGHTONLCD
-	BSF PORTD,LCD_RS_PIN ; Set to data mode
-	MOVF LCD_CSR, W ; Load the current position into the W register
-	ADDWF Point, F ; Calculate the address of the character to be shifted
-	MOVF Point, W ; Load the address of the character to be shifted into the W register
-	; CALL read ; Read the value at that address
-	MOVWF TEMP ; Store the value in TEMP
-	BCF PORTD,LCD_RS_PIN ; Set to command mode
-	MOVLW 0x14 ; Move cursor one position to the right
-	ADDWF LCD_CSR, F ; Update the cursor position
-	MOVLW 0x80 ; Move cursor to the second row, first column
-	ADDWF LCD_CSR, W ; Calculate the address of the second row, first column
-	MOVWF Point ; Store the address in Point
-	BSF PORTD,LCD_RS_PIN ; Set to data mode
-	MOVF TEMP, W ; Load the value stored in TEMP into the W register
-	CALL PulseWriteCharToLCD ; Output the value to the display
-	BCF PORTD,LCD_RS_PIN ; Set to command mode
-	MOVLW 0x10 ; Move cursor one position to the right
-	ADDWF LCD_CSR, F ; Update the cursor position
-	RETURN ; Return to the calling routine
-
-
-MOVELEFTONLCD
-	BSF PORTD,LCD_RS_PIN ; Set to data mode
-	MOVF LCD_CSR, W ; Load the current position into the W register
-	ADDWF Point, F ; Calculate the address of the character to be shifted
-	MOVF Point, W ; Load the address of the character to be shifted into the W register
-	; CALL read ; Read the value at that address
-	MOVWF TEMP ; Store the value in TEMP
-	BCF PORTD,LCD_RS_PIN ; Set to command mode
-	MOVLW 0x10 ; Move cursor one position to the left
-	ADDWF LCD_CSR, F ; Update the cursor position
-	MOVLW 0x80 ; Move cursor to the second row, first column
-	ADDWF LCD_CSR, W ; Calculate the address of the second row, first column
-	MOVWF Point ; Store the address in Point
-	BSF PORTD,LCD_RS_PIN ; Set to data mode
-	MOVF TEMP, W ; Load the value stored in TEMP into the W register
-	CALL PulseWriteCharToLCD ; Output the value to the display
-	BCF PORTD,LCD_RS_PIN ; Set to command mode
-	MOVLW 0x14 ; Move cursor one position to the left
-	ADDWF LCD_CSR, F ; Update the cursor position
-	RETURN ; Return to the calling routine
-
-
-WritePromptToLCD 
-
-	MOVLW	0x80		; move cursor to first line, first column
-	CALL	PulseWriteCmdToLCD ; send command
-
-	MOVLW 'E';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'n';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 't';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'e'; 
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'r';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW ' ';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'S';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 't';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'r';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'i';
-	CALL PulseWriteCharToLCD;
-
- 	MOVLW 'n'; 
-	CALL PulseWriteCharToLCD;
-
-	MOVLW 'g';
-	CALL PulseWriteCharToLCD;
-
-	MOVLW ':';
-	CALL PulseWriteCharToLCD;
-
-	RETURN
-	
-	
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Start Loop senario;;;;;;;;;;;;;;;;;;;;;;;;;;;
-LOOPTOLOCATION
-	CALL	BLINK		;  blinking the cursor at the Location to Write before pushing the button 
-	CALL	LOOPtoIndex	; changing the char
-	INCF	LCD_CSR, F
-	RETURN
-
-LOOPtoIndex
-	CALL	PINSTABLE
-	CALL	waitINT
-	CALL	IsReleased
-	BCF	PORTD,LCD_RS_PIN	; command mode
-	MOVWF	LCD_CSR	; selection Location
-	CALL	PulseWriteCmdToLCD ; send command 
-	BSF	PORTD,LCD_RS_PIN	; data mode
-	MOVF currentCharReg, W	;Write char A on W
-	CALL	PulseWriteCharToLCD		; send Data
-	CALL	TIMER2S
-	CALL	WaitButton	;Increment when button pressed
-	RETURN
-	
-TIMER2S	
-	MOVLW D'78' ; Count for 250ms delay
-	MOVWF TMR2 ; Load count
-	RETURN
-
-
-WaitButton
-	
-LOOPTOLOCATION1
-    MOVLW D'249' ; Count for 1ms delay
-	MOVWF Timer1 ; Load count
-LOOP1 NOP ; Pad for 4 cycle loop
-	BTFSS  	PORTB,1   	; Test button
-	GOTO	PRESED	
-	DECFSZ Timer1 ; Count
-	GOTO LOOP1 ; until Z
-	DECFSZ TMR2 ; Count for 250ms
-	GOTO LOOPTOLOCATION1 ; until Z
-
-CheakForWhitSpaceToEndString
-	MOVF	currentCharReg, W; Move the contents of currentCharReg to W
-	SUBLW	' ' ; Subtract the value of ASCII space from w
-	BTFSC	STATUS, Z	; Check if the result of the comparison is zero
-	GOTO	SKIPtoNormal	; If the contents of char is not ' ', skip the next instruction
-	MOVLW	'A'		; Load initial value of char 'A' To W
-	MOVWF	currentCharReg	; Store the value in the currentCharReg register FOR the second iteration
-	MOVLW	D'1'		; Load 1 into W
-	MOVWF	counter		; Store the value 1 to the counter register TO END
-	RETURN
-	
-
-SKIPtoNormal	
-	MOVLW	'A'		; Load initial value of char 'A' To W
-	MOVWF	currentCharReg	; Store the value in the currentCharReg register FOR the second iteration
-	RETURN ;  finish 2 seconds
-
-PRESED	
-	CALL	PINSTABLE
-	CALL	waitINT
-	CALL	IsReleased
-
-INCREMENTCHAR
-	BCF	PORTD,LCD_RS_PIN	; command mode
-	MOVWF	LCD_CSR	; selection Location
-	CALL	PulseWriteCmdToLCD ; send command 
-	BSF	PORTD,LCD_RS_PIN	; data mode
-
-CheakForZ
-	MOVF	currentCharReg, W; Move the contents of currentCharReg to W
-	SUBLW	'Z' ; Subtract the value of ASCII Z from w
-	BTFSC	STATUS, Z	; Check if the result of the comparison is zero
-	GOTO	CheakForWhitSpace; If the contents of char is not 'Z', skip the next instruction
-	MOVLW	' '		; Load the ASCII value of a white space into W
-	MOVWF	currentCharReg	; Move W into currentCharReg
-	GOTO	MOVETOLCD
-
-CheakForWhitSpace
-	MOVF	currentCharReg, W; Move the contents of currentCharReg to W
-	SUBLW	' ' ; Compare W to the ASCII value of ' '
-	BTFSC	STATUS, Z	; Check if the result of the comparison is zero
-	GOTO	SKIP		; If the contents of char is not ' ', skip the next instruction
-	MOVLW	'A'		; Load the ASCII value of 'A' into W
-	MOVWF	currentCharReg	; Move W into currentCharReg
-	GOTO	MOVETOLCD	
-	
-SKIP	
-	INCF currentCharReg, F  ; Increment currentCharReg
-
-MOVETOLCD
-	MOVF currentCharReg, W	; Write char on W
-	CALL	PulseWriteCharToLCD		; send Data
-	CALL	TIMER2S		; Old value for timer 2 to mkae 2s
-	GOTO	WaitButton	; To Update the same location
-		
-PINSTABLE	
-	CLRF	TMR0		; Reset timer
-	RETURN
-waitINT	
-	BTFSS	INTCON,2	; Check for time out"INT"
-	GOTO	waitINT		; Wait if not
-	RETURN
-IsReleased	
-	BTFSS	PORTB,1		; Check step button
-	GOTO	IsReleased	; and wait until released
-	RETURN
-
-PulseWriteCmdToLCD
-	MOVWF TEMP
-	SWAPF TEMP
-	MOVF TEMP, W
-	ANDLW 0x0f
-	MOVWF PORTD
-	BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
-	call PULSE_LCD_E_PIN
-	;call onems
-	SWAPF TEMP
-	movf TEMP, W
-	ANDLW	0x0f
-	MOVWF PORTD
-	BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
-	call PULSE_LCD_E_PIN
-	RETURN
-
-;--------------------------------------------------------------
-;	Send a command byte in two nibbles from RB4 - RB7
-;	Receives command in W, uses PulseE and Onems
-;--------------------------------------------------------------
-PulseWriteCharToLCD
-    MOVWF TEMP
-    SWAPF TEMP
-    MOVF TEMP, W
-    ANDLW 0x0F ; Clear low nybble
-    MOVWF PORTD
-    BSF PORTD, LCD_RS_PIN ; set character mode on RS
-    call PULSE_LCD_E_PIN ; clock LCD
-    call onems
-    SWAPF TEMP
-    MOVF TEMP, W
-    ANDLW	0x0F ; Clear high nybble
-    MOVWF PORTD
-    BSF PORTD, LCD_RS_PIN 
-    call PULSE_LCD_E_PIN 
-    RETURN
-	
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;End Loop senario;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;;;;;;;;;;;;;;;;Add blinking Delay ;;;;;;;;;;;;;;;;;;;;;;;;;;
-BLINK
-	MOVLW	blinkDelay	; Load the delay value into W
-	CALL	DELAY		; Wait for the delay time to pass
-	BTFSS	PORTB,1		; Double cheak  button
-	RETURN			;
-
-	BCF	PORTD,LCD_RS_PIN	; command mode
-	MOVWF	LCD_CSR	; selection Location
-	CALL	PulseWriteCmdToLCD ; send command 
-	BSF	PORTD,LCD_RS_PIN	; data mode
-	MOVLW	CSR_LOC		; |
-	CALL	PulseWriteCmdToLCD		; send CSR_LOC
-	
-
-	MOVLW	blinkDelay	; Load the delay value into W
-	CALL	DELAY		; Wait for the delay time to pass
-	BTFSS	PORTB,1		; Double cheak  button
-	RETURN			;
-
-	BCF	PORTD,LCD_RS_PIN	; command mode
-	MOVWF	LCD_CSR	; selection Location
-	CALL	PulseWriteCmdToLCD ; send command 
-	BSF	PORTD,LCD_RS_PIN	; data mode
-	MOVLW	WHITE		; 
-	CALL	PulseWriteCmdToLCD		; WHITE
-	BTFSC	PORTB,1		; Test button
-	GOTO	BLINK		; Loop back
-	RETURN			; counterBlinking to Zero when clicking the button
-
-DELAY
-	MOVWF	counterBlink	; Store the delay value in the counter register
-DELAY_LOOP
-	BTFSS	PORTB,1		; Double cheak  button
-	RETURN			;
-	DECFSZ	counterBlink, F	; Decrement the counter and skip next instruction if non-zero
-	GOTO	DELAY_LOOP	; Loop back if counter is non-zero	
-	RETURN			; Return to main program
-;;;;;;;;;;;;;;;;End blinking Delay ;;;;;;;;;;;;;;;;;;;;;;;;;; 
-
 
 ;--------------------------------------------------------------Start LCD CODE----------------------------------
 ;	1ms delay with 1us instruction time (1000 cycles)
@@ -565,6 +259,91 @@ SETUP_LCD
 	CALL	PulseWriteCmdToLCD ; send command
 
 	RETURN			; Done
+
+
+PulseWriteCmdToLCD
+	MOVWF TEMP
+	SWAPF TEMP
+	MOVF TEMP, W
+	ANDLW 0x0f
+	MOVWF PORTD
+	BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
+	call PULSE_LCD_E_PIN
+	;call onems
+	SWAPF TEMP
+	movf TEMP, W
+	ANDLW	0x0f
+	MOVWF PORTD
+	BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
+	call PULSE_LCD_E_PIN
+	RETURN
+
+;--------------------------------------------------------------
+;	Send a command byte in two nibbles from RB4 - RB7
+;	Receives command in W, uses PulseE and Onems
+;--------------------------------------------------------------
+PulseWriteCharToLCD
+    MOVWF TEMP
+    SWAPF TEMP
+    MOVF TEMP, W
+    ANDLW 0x0F ; Clear low nybble
+    MOVWF PORTD
+    BSF PORTD, LCD_RS_PIN ; set character mode on RS
+    call PULSE_LCD_E_PIN ; clock LCD
+    call onems
+    SWAPF TEMP
+    MOVF TEMP, W
+    ANDLW	0x0F ; Clear high nybble
+    MOVWF PORTD
+    BSF PORTD, LCD_RS_PIN 
+    call PULSE_LCD_E_PIN 
+    RETURN
+
+WritePromptToLCD 
+
+	MOVLW	0x80		; move cursor to first line, first column
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW 'E';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'n';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 't';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'e'; 
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'r';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW ' ';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'S';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 't';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'r';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'i';
+	CALL PulseWriteCharToLCD;
+
+ 	MOVLW 'n'; 
+	CALL PulseWriteCharToLCD;
+
+	MOVLW 'g';
+	CALL PulseWriteCharToLCD;
+
+	MOVLW ':';
+	CALL PulseWriteCharToLCD;
+
+	RETURN
 
 ;--------------------------------------------------------------End LCD CODE-------------------------------------
 DONE
