@@ -16,16 +16,20 @@ Point	EQU 0x73		; Program table pointer
 TEMP	EQU 0x75		; Temp store
 TEMP2	EQU 0x76		; Temp2 store
 
-LCD_CUSROR	EQU 0x22; LCD_CUSROR register
 blinkDelay	EQU 0x50; Delay time for cursor blink :can be adjusted as needed
+
+
 
 CSR_LOC		EQU D'124'	; CSR_LOC: "  |  "
 WHITE		EQU D'32'	; WHITE space character
 
 ACHAR		EQU	D'65'; A
 ACHAR		EQU	D'65'; A
-currentCharReg	EQU	0x23;
 
+LCD_CUSROR	EQU 0x22; LCD_CUSROR register
+currentCharReg	EQU	0x23;
+CURRENT_CHAR EQU 0x26
+CURRENT_CHAR_INDEX EQU 0x27
 
 ; ---------------------------------
 ; ----------- Code Area -----------
@@ -60,33 +64,14 @@ ISR_FOR_TIMER
 
 ISR_FOR_BTN
 
-; TODO increment_letter, check if Z, check if space
-
-    
-
-	BSF PORTC,3
-	BSF PORTC,4
+    CALL INCREMENT_CURRENT_CHAR
+    CALL CHECK_IF_Z
+	CALL CHECK_IF_SPACE
 
 
-	MOVLW	0xAF ; set delay iterations
-	
-	CALL DELAY_W
-	CALL DELAY_W
-	CALL DELAY_W
+	CALL DISPLAY_CURRENT_CHAR
 
-	CLRF PORTC
-
-	
-	CALL DELAY_W
-	CALL DELAY_W
-	CALL DELAY_W
-
-	BSF PORTC,4
-	BSF PORTC,5
-	BSF PORTC,6
-	BSF PORTC,7
-
-
+	; TODO increment_letter, check if Z, check if space
 
     BCF 	PIR1,TMR1IF     ; clear the TMR1 ov flag 
 	BCF		INTCON,INTF		; clear the Interrupt flag 
@@ -141,7 +126,9 @@ START_EXECUTION
 	MOVWF	currentCharReg	; Store the value in the currentCharReg register
 
 	CALL	SETUP_LCD ; Initialise the display FOR LCD
-	CALL	LCD_WRITE_PROMPT
+	CALL	LCD_WRITE_PROMPT; write the promp "Enter String:"
+
+	CALL	MOVE_CURSOR_TO_LINE_2_WRITE_A
 
 
 	CALL	LABEL_REACH ; announce reaching this line
@@ -269,8 +256,7 @@ PulseWriteCmdToLCD
 	RETURN
 
 ;--------------------------------------------------------------
-;	Send a command byte in two nibbles from RB4 - RB7
-;	Receives command in W, uses PulseE and Onems
+;	Send a char byte
 ;--------------------------------------------------------------
 PulseWriteCharToLCD
     MOVWF TEMP
@@ -288,6 +274,37 @@ PulseWriteCharToLCD
     BSF PORTD, LCD_RS_PIN 
     call PULSE_LCD_E_PIN 
     RETURN
+
+MOVE_CURSOR_TO_LINE_2_WRITE_A
+
+	MOVLW	0xC0		
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW 'A'
+	MOVWF CURRENT_CHAR ; move A to current char
+
+	MOVLW 0x0
+	MOVWF CURRENT_CHAR_INDEX
+
+	CALL DISPLAY_CURRENT_CHAR
+
+	RETURN
+
+DISPLAY_CURRENT_CHAR
+
+    MOVLW	0x0C	; turn cursor off
+	CALL	PulseWriteCmdToLCD ; send command
+
+    MOVF CURRENT_CHAR, W
+	CALL PulseWriteCharToLCD
+
+	MOVLW	0x10 ; shift cursor to left
+	CALL	PulseWriteCmdToLCD ; send command
+
+    MOVLW	0x0E	; turn cursor on
+	CALL	PulseWriteCmdToLCD ; send command
+	
+	RETURN
 
 LCD_WRITE_PROMPT 
 
@@ -335,7 +352,41 @@ LCD_WRITE_PROMPT
 
 	RETURN
 
-;--------------------------------------------------------------End LCD CODE-------------------------------------
+; ----------------------------- LOGIC -----------------------------
+
+CHECK_IF_SPACE
+
+    MOVF CURRENT_CHAR, W
+	SUBLW 0x21 ; ASCII Of Space + 1
+
+	BTFSS STATUS, Z ; Test zero & skip
+    RETURN
+
+	MOVLW 'A'
+	MOVWF CURRENT_CHAR ; move A to current char
+
+	RETURN
+
+CHECK_IF_Z
+	MOVF CURRENT_CHAR, W
+	SUBLW 0x5B ; ASCII Of 'Z' + 1
+
+	BTFSS STATUS, Z ; Test zero & skip
+    RETURN
+
+	MOVLW ' '
+	MOVWF CURRENT_CHAR ; move A to current char
+
+	RETURN
+
+INCREMENT_CURRENT_CHAR
+
+    INCF CURRENT_CHAR, 1
+
+	RETURN
+
 DONE
 	END
-	
+
+
+
