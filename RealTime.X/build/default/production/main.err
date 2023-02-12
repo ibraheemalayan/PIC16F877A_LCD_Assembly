@@ -1,13 +1,15 @@
-Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 49 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 53 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 57 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 75 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 88 : Register in operand not in bank 0.  Ensure that bank bits are correct.
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 160 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 292 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 294 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 366 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 373 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 387 : Using default destination of 1 (file).
-Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 394 : Using default destination of 1 (file).
+Warning[205] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 42 : Found directive in column 1. (ORG)
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 111 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 115 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 124 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 125 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 138 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 226 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 358 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 360 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 432 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 439 : Using default destination of 1 (file).
 Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 453 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 460 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 519 : Using default destination of 1 (file).
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 539 : Register in operand not in bank 0.  Ensure that bank bits are correct.

@@ -13,7 +13,8 @@ Timer1	EQU 0x70		; 1ms count register
 TimerX	EQU 0x71		; Xms count register
 Var	EQU 0x72		; Output variable
 Point	EQU 0x73		; Program table pointer
-TEMP	EQU 0x75		; Temp store for output code
+TEMP	EQU 0x75		; Temp store
+TEMP2	EQU 0x76		; Temp2 store
 
 
 counter	EQU 0x20	; Counter register
@@ -37,16 +38,66 @@ currentCharReg	EQU	0x23;
 
     ORG	0x0000 		; Start of program memory
     NOP			; For ICD mode
-    GOTO start_exec
+    GOTO START_EXECUTION
+
+ORG	0x0004 ; ISR
+
+	MOVLW	b'00100111'		; least significant bits of TMR1
+	MOVWF	TMR1L
+	MOVLW	b'11111111'		; most significant bits of TMR1
+	MOVWF	TMR1H
+
+	; CLEAR OVERFLOW FLAG
+	BCF 	PIR1,TMR1IF	
+
+	BTFSS	INTCON, INTF	; based on INTCON INTF Bit
+	GOTO 	ISR_FOR_TIMER
+	GOTO 	ISR_FOR_BTN
+
+ISR_FOR_TIMER
+
+; TODO increment_letter, check if Z, check if space
+
+    BCF 	PIR1,TMR1IF     ; clear the TMR1 ov flag 
+	BCF		INTCON,INTF		; clear the External Interrupt Flag bit
+    RETFIE
 
 
-start_exec
+ISR_FOR_BTN
 
-   
+; TODO increment_letter, check if Z, check if space
 
-	BANKSEL TRISC
-	MOVLW	0x00		; In order to set PORTC Direction to output
-	MOVWF	TRISC
+    
+
+	BSF PORTC,3
+	BSF PORTC,4
+
+
+	MOVLW	0xAF ; set delay iterations
+	
+	CALL DELAY_W
+	CALL DELAY_W
+	CALL DELAY_W
+
+	CLRF PORTC
+
+	
+	CALL DELAY_W
+	CALL DELAY_W
+	CALL DELAY_W
+
+	BSF PORTC,4
+	BSF PORTC,5
+	BSF PORTC,6
+	BSF PORTC,7
+
+
+
+    BCF 	PIR1,TMR1IF     ; clear the TMR1 ov flag 
+	BCF		INTCON,INTF		; clear the Interrupt flag 
+    RETFIE
+
+SETUP_PORTS_DIGITAL
 
 	BANKSEL ADCON1
 	MOVLW	0x06		; Disable A/D Conversion
@@ -56,6 +107,40 @@ start_exec
 	MOVLW	0x07		; Disable Comparator
 	MOVWF	CMCON
 
+	RETURN
+
+
+SETUP_INTERRUPTS
+
+	BANKSEL TRISB
+
+	BSF TRISB, 0x00 ; Set Port B Direction To Input
+	BSF OPTION_REG, INTEDG ; Rising Edge
+	BCF INTCON,INTF ; Clear Interrupt Flag
+	BSF INTCON,INTE ; Enable RB0 Interrupt Bit 
+	BSF INTCON,GIE ; Enable Global Interrupt Bit  
+
+	RETURN
+
+
+INIT_DEBUG_PORT
+
+	; port c is used for debugging
+	BANKSEL TRISC
+	MOVLW	0x00		; In order to set PORTC Direction to output
+	MOVWF	TRISC
+
+	RETURN
+
+
+
+START_EXECUTION
+
+	CALL INIT_DEBUG_PORT
+	CALL SETUP_INTERRUPTS
+	CALL SETUP_PORTS_DIGITAL
+
+   
 	MOVLW	0x5		; Load initial value of 5 into W
 	MOVWF	counter		; Store the value in the counter register
 
@@ -64,40 +149,12 @@ start_exec
 
 	MOVLW	ACHAR		; Load initial value of char 'A' To W
 	MOVWF	currentCharReg	; Store the value in the currentCharReg register
-    
-
-
-; Initialise Timer0 for push button
-
-	BANKSEL OPTION_REG
-
-	MOVLW	b'11011000'	; TMR0 initialisation code
-	MOVWF	OPTION_REG		; Int clock, no prescale	
-	
-    ; this is causing everything to crash
-	; BANKSEL	INTCON		; select bank 0
-	; MOVLW	b'10100000'	; INTCON init. code
-	; MOVWF	INTCON		; Enable TMR0 interrupt
-
-	
-
-
-
-; Port & display setup
-	BANKSEL TRISD ; select bank 1
-	CLRF TRISD ; Port D as output to LCD
-
-	BANKSEL PORTD ; select bank 0
-	CLRF PORTD ; Clear display outputs
-
-
-	
-
-;Port B defaults to inputs for the push button :using pin 1
 
 	CALL	SETUP_LCD ; Initialise the display FOR LCD
-	CALL	PUTEnterStringOnLCD
-	CALL LABEL_REACH ; announce reaching this line
+	CALL	WritePromptToLCD
+
+
+	CALL	LABEL_REACH ; announce reaching this line
 
 
 
@@ -122,12 +179,13 @@ MovingSTRING
 ENDMOVING	
 	MOVLW	D'5'		; Load 5 into W
 	MOVWF	counter		; Store the value 5 to the counter register to start again
-	CALL	PUTEnterStringOnLCD
+	CALL	WritePromptToLCD
 
 ; used to announce reaching a section of the code
 LABEL_REACH
 
     BANKSEL PORTC
+	CLRF PORTC
     
 	MOVLW	0x80 ; set delay loop to 60 iterations
 
@@ -135,19 +193,12 @@ LABEL_REACH
 	CALL DELAY_W
 	BSF PORTC,1
 	CALL DELAY_W
-	BSF PORTC,2
-	CALL DELAY_W
-	BSF PORTC,3
-	CALL DELAY_W
 
 	MOVLW	0xFF ; set delay loop to 255 iteration
-
 	CALL DELAY_W
 
 	BCF PORTC,0
 	BCF PORTC,1
-	BCF PORTC,2
-	BCF PORTC,3
 
 	CALL DELAY_W
 
@@ -156,10 +207,18 @@ LABEL_REACH
 ; 200 instructions delay
 DELAY_W	
 	MOVWF	TEMP
-loop_start	NOP
-		DECFSZ	TEMP
-		GOTO	loop_start
-		RETURN
+loop_start
+
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+	NOP
+
+	DECFSZ	TEMP
+	GOTO	loop_start
+	RETURN
 
 MOVERIGHTONLCD
 	BSF PORTD,LCD_RS_PIN ; Set to data mode
@@ -205,7 +264,7 @@ MOVELEFTONLCD
 	RETURN ; Return to the calling routine
 
 
-PUTEnterStringOnLCD 
+WritePromptToLCD 
 
 	MOVLW	0x80		; move cursor to first line, first column
 	CALL	PulseWriteCmdToLCD ; send command
@@ -469,7 +528,10 @@ PULSE_LCD_E_PIN	BSF	PORTD, LCD_E_PIN		; Set E high
 ;--------------------------------------------------------------
 SETUP_LCD	
 
-	
+	BANKSEL TRISD
+	CLRF TRISD ; Port D as output to LCD
+
+	BANKSEL PORTD
 
 	CLRF	PORTD		; and output it to display
 
