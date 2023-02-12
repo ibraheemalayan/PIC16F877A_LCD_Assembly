@@ -7,28 +7,29 @@
 
 LCD_RS_PIN	EQU 4		; Register select output bit
 LCD_E_PIN	EQU 5		; Enable display input
+MAX_CHARS	EQU 2
+
 
 ; 	Uses GPR 70 - 75 for LCD Data
 Timer1	EQU 0x70		; 1ms count register
 TimerX	EQU 0x71		; Xms count register
 Var	EQU 0x72		; Output variable
 Point	EQU 0x73		; Program table pointer
+
+
 TEMP	EQU 0x75		; Temp store
 TEMP2	EQU 0x76		; Temp2 store
 
 blinkDelay	EQU 0x50; Delay time for cursor blink :can be adjusted as needed
 
-
+CRS_LOCATION_IN_ANIMATION EQU 0x41
 
 CSR_LOC		EQU D'124'	; CSR_LOC: "  |  "
 WHITE		EQU D'32'	; WHITE space character
 
-ACHAR		EQU	D'65'; A
-ACHAR		EQU	D'65'; A
-
-LCD_CUSROR	EQU 0x22; LCD_CUSROR register
-currentCharReg	EQU	0x23;
 CURRENT_CHAR EQU 0x26
+
+COUNT EQU 0x29
 
 CURRENT_CHAR_INDEX EQU 0x30
 
@@ -177,10 +178,7 @@ START_EXECUTION
 	 
 
 
-	MOVWF	LCD_CUSROR	; Store the value in the LCD_CUSROR register
 
-	MOVLW	ACHAR		; Load initial value of char 'A' To W
-	MOVWF	currentCharReg	; Store the value in the currentCharReg register
 
 	CALL	SETUP_LCD ; Initialise the display FOR LCD
 	CALL	LCD_WRITE_PROMPT; write the promp "Enter String:"
@@ -189,35 +187,33 @@ START_EXECUTION
 
     MOVLW C1
 	MOVWF CURRENT_CHAR_INDEX
+
+	CLRF COUNT
 	
-	CALL	LABEL_REACH ; announce reaching this line
+	CALL	BLINK_CURSOR ; blink cursor
 
 
 
 ; used to announce reaching a section of the code
-LABEL_REACH
+BLINK_CURSOR
 
-    BANKSEL PORTC
-	CLRF PORTC
-    
-	MOVLW	0x80 ; set delay loop to 60 iterations
+	MOVLW	0x0E ; cursor blink
+	CALL	PulseWriteCmdToLCD ; send command
 
-	BSF PORTC,0
-	CALL DELAY_W
-	BSF PORTC,1
-	CALL DELAY_W
+	; delay 10ms * 20 = 200ms
+	MOVLW 0x14
+	CALL DELAY_W_10_MS
 
-	MOVLW	0xFF ; set delay loop to 255 iteration
-	CALL DELAY_W
+	MOVLW	0x0C ; cursor off
+	CALL	PulseWriteCmdToLCD ; send command
 
-	BCF PORTC,0
-	BCF PORTC,1
+	; delay 10ms * 20 = 200ms
+	MOVLW 0x14
+	CALL DELAY_W_10_MS
 
-	CALL DELAY_W
+	GOTO BLINK_CURSOR ; loop for ever
 
-	GOTO LABEL_REACH ; loop for ever
-
-; 200 instructions delay
+; instruction delay of 10us * W (each instruction is 1us)
 DELAY_W	
 	MOVWF	TEMP
 loop_start
@@ -228,9 +224,28 @@ loop_start
 	NOP
 	NOP
 	NOP
+	NOP
+	NOP
+	NOP
+	NOP
 
 	DECFSZ	TEMP
 	GOTO	loop_start
+	RETURN
+
+; instruction delay of ms * W (each loop is 10ms)
+DELAY_W_10_MS	
+	MOVWF	TEMP2
+	MOVLW	0xFA
+lp_st
+    
+	CALL DELAY_W
+	CALL DELAY_W
+	CALL DELAY_W
+	CALL DELAY_W
+
+	DECFSZ	TEMP2
+	GOTO	lp_st
 	RETURN
 
 ;--------------------------------------------------------------Start LCD CODE----------------------------------
@@ -462,19 +477,18 @@ MOVE_TO_NEXT_CHAR
     CLRF STATUS
 
 	BANKSEL C1
-	BANKISEL C1
-
 	BCF STATUS, IRP ; bank select for indirect
 
-    
+
 	; Load address of array pointer into FSR
 	MOVF CURRENT_CHAR_INDEX, W
 
-	MOVLW C1
+	NOP
+	
+	
     MOVWF FSR
 
-	BCF FSR, 0x7
-	BCF FSR, 0x6
+	BANKISEL C1
     
 	; Load current char into w then into array ptr
 	MOVF CURRENT_CHAR, W
@@ -488,7 +502,162 @@ MOVE_TO_NEXT_CHAR
 	MOVLW	0x14 ; shift cursor to right
 	CALL	PulseWriteCmdToLCD ; send command
 
+	; check count ; -------------------
+
+	INCF COUNT, 0x1
+
+	CLRW 
+
+	BCF STATUS, Z
+
+	MOVF COUNT, W
+	SUBLW MAX_CHARS
+	BTFSC	STATUS, Z ; if reached 5 go to FINISH_STRING
+	GOTO	FINISH_STRING
+
+	; ----------------------------------
+
+
     RETURN
+
+FINISH_STRING
+
+    MOVLW	0x08 ; turn off display
+	CALL	PulseWriteCmdToLCD ; send command
+
+	BSF PORTC, 6
+
+    ; delay 10ms * 100 = 1 s
+	MOVLW 0x64
+	CALL DELAY_W_10_MS
+
+	MOVLW	0x01 ; clear display
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW	0x0C ; turn on display without cursor
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW	0x80 ; set cursor at begining of 1st line
+	CALL	PulseWriteCmdToLCD ; send command
+    
+
+    DECF C1, 1
+	DECF C2, 1
+	DECF C3, 1
+	DECF C4, 1
+	DECF C5, 1
+
+    MOVF C1, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C2, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C3, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C4, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C5, W 
+	CALL	PulseWriteCharToLCD
+
+
+
+	CLRF CRS_LOCATION_IN_ANIMATION
+
+
+MOVING_LOOP
+
+    MOVLW	0x80 ; set cursor at begining of 1st line
+	CALL	PulseWriteCmdToLCD ; send command
+
+    MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+    
+	; delay 10ms * 50 = 500ms
+	MOVLW 0x32
+	CALL DELAY_W_10_MS
+
+	INCF CRS_LOCATION_IN_ANIMATION, 1
+
+	MOVF CRS_LOCATION_IN_ANIMATION, W
+    SUBLW 0x10 ; column 16
+    BTFSS STATUS, C
+    GOTO REACHED_LINE_END
+	GOTO MOVING_LOOP
+
+
+REACHED_LINE_END
+
+    MOVLW	0x01 ; clear screen
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW	0xC0 ; set cursor at begining of 2nd line
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+	MOVLW	0x1C ; shift screen to the right
+	CALL	PulseWriteCmdToLCD ; send command
+
+	MOVF C1, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C2, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C3, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C4, W 
+	CALL	PulseWriteCharToLCD
+	MOVF C5, W 
+	CALL	PulseWriteCharToLCD
+
+REACHED_LINE_END_LOOP
+
+	MOVLW	0x18 ; shift screen to the left
+	CALL	PulseWriteCmdToLCD ; send command
+    
+	; delay 10ms * 50 = 500ms
+	MOVLW 0x32
+	CALL DELAY_W_10_MS
+
+	DECF CRS_LOCATION_IN_ANIMATION, 1
+
+	MOVF CRS_LOCATION_IN_ANIMATION, W
+    BTFSC STATUS, Z
+    GOTO MOVING_LOOP
+	GOTO REACHED_LINE_END_LOOP
+
+    
+
+
+	GOTO MOVING_LOOP
+
+	RETURN
 
 DONE
 	END

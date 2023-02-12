@@ -1,4 +1,4 @@
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  1
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -16,565 +16,753 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00007 
   00000004            00008 LCD_RS_PIN      EQU 4           ; Register select output bit
   00000005            00009 LCD_E_PIN       EQU 5           ; Enable display input
-                      00010 
-                      00011 ;       Uses GPR 70 - 75 for LCD Data
-  00000070            00012 Timer1  EQU 0x70                ; 1ms count register
-  00000071            00013 TimerX  EQU 0x71                ; Xms count register
-  00000072            00014 Var     EQU 0x72                ; Output variable
-  00000073            00015 Point   EQU 0x73                ; Program table pointer
-  00000075            00016 TEMP    EQU 0x75                ; Temp store
-  00000076            00017 TEMP2   EQU 0x76                ; Temp2 store
+  00000002            00010 MAX_CHARS       EQU 2
+                      00011 
+                      00012 
+                      00013 ;       Uses GPR 70 - 75 for LCD Data
+  00000070            00014 Timer1  EQU 0x70                ; 1ms count register
+  00000071            00015 TimerX  EQU 0x71                ; Xms count register
+  00000072            00016 Var     EQU 0x72                ; Output variable
+  00000073            00017 Point   EQU 0x73                ; Program table pointer
                       00018 
-  00000050            00019 blinkDelay      EQU 0x50; Delay time for cursor blink :can be adjusted as needed
-                      00020 
-                      00021 
+                      00019 
+  00000075            00020 TEMP    EQU 0x75                ; Temp store
+  00000076            00021 TEMP2   EQU 0x76                ; Temp2 store
                       00022 
-  0000007C            00023 CSR_LOC         EQU D'124'      ; CSR_LOC: "  |  "
-  00000020            00024 WHITE           EQU D'32'       ; WHITE space character
-                      00025 
-  00000041            00026 ACHAR           EQU     D'65'; A
-  00000041            00027 ACHAR           EQU     D'65'; A
-                      00028 
-  00000022            00029 LCD_CUSROR      EQU 0x22; LCD_CUSROR register
-  00000023            00030 currentCharReg  EQU     0x23;
-  00000026            00031 CURRENT_CHAR EQU 0x26
-                      00032 
-  00000030            00033 CURRENT_CHAR_INDEX EQU 0x30
-                      00034 
-  00000035            00035 C1 EQU 0x35
-  00000036            00036 C2 EQU 0x36
-  00000037            00037 C3 EQU 0x37
-  00000038            00038 C4 EQU 0x38
-  00000039            00039 C5 EQU 0x39
-                      00040 
-  00000028            00041 TIMER_INDEX                EQU 0x28
-                      00042 
-  00000051            00043 STRINGLEN                  EQU 0x51
-                      00044 ; ---------------------------------
-                      00045 ; ----------- Code Area -----------
-                      00046 ; ---------------------------------
-                      00047 
-                      00048     ORG 0x0000          ; Start of program memory
-0000   0000           00049     NOP                 ; For ICD mode
-0001   2???           00050     GOTO START_EXECUTION
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  2
+  00000050            00023 blinkDelay      EQU 0x50; Delay time for cursor blink :can be adjusted as needed
+                      00024 
+  00000041            00025 CRS_LOCATION_IN_ANIMATION EQU 0x41
+                      00026 
+  0000007C            00027 CSR_LOC         EQU D'124'      ; CSR_LOC: "  |  "
+  00000020            00028 WHITE           EQU D'32'       ; WHITE space character
+                      00029 
+  00000026            00030 CURRENT_CHAR EQU 0x26
+                      00031 
+  00000029            00032 COUNT EQU 0x29
+                      00033 
+  00000030            00034 CURRENT_CHAR_INDEX EQU 0x30
+                      00035 
+  00000035            00036 C1 EQU 0x35
+  00000036            00037 C2 EQU 0x36
+  00000037            00038 C3 EQU 0x37
+  00000038            00039 C4 EQU 0x38
+  00000039            00040 C5 EQU 0x39
+                      00041 
+  00000028            00042 TIMER_INDEX                EQU 0x28
+                      00043 
+  00000051            00044 STRINGLEN                  EQU 0x51
+                      00045 ; ---------------------------------
+                      00046 ; ----------- Code Area -----------
+                      00047 ; ---------------------------------
+                      00048 
+                      00049     ORG 0x0000          ; Start of program memory
+0000   0000           00050     NOP                 ; For ICD mode
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00051 
-                      00052         ORG     0x0004 ; ISR
-                      00053 
-0004   3027           00054         MOVLW   b'00100111'             ; least significant bits of TMR1
-0005   008E           00055         MOVWF   TMR1L
-0006   30FF           00056         MOVLW   b'11111111'             ; most significant bits of TMR1
-0007   008F           00057         MOVWF   TMR1H
-                      00058 
-                      00059         ; CLEAR OVERFLOW FLAG
-0008   100C           00060         BCF     PIR1,TMR1IF     
-                      00061 
-0009   1C8B           00062         BTFSS   INTCON, INTF    ; based on INTCON INTF Bit
-000A   2???           00063         GOTO    ISR_FOR_TIMER
-000B   2???           00064         GOTO    ISR_FOR_BTN
-                      00065 
-000C                  00066 RESET_TIMER
-000C   3000           00067         MOVLW   0
-000D   1283 1303      00068         BANKSEL TMR1L
-000F   008E           00069         MOVWF   TMR1L
-0010   008F           00070         MOVWF   TMR1H
-0011   3008           00071         MOVLW   8
-0012   1283 1303      00072         BANKSEL TIMER_INDEX
-0014   00A8           00073         MOVWF   TIMER_INDEX
-0015   0008           00074         RETURN
-                      00075 
+0001   2???           00051     GOTO START_EXECUTION
+                      00052 
+                      00053         ORG     0x0004 ; ISR
+                      00054 
+0004   3027           00055         MOVLW   b'00100111'             ; least significant bits of TMR1
+0005   008E           00056         MOVWF   TMR1L
+0006   30FF           00057         MOVLW   b'11111111'             ; most significant bits of TMR1
+0007   008F           00058         MOVWF   TMR1H
+                      00059 
+                      00060         ; CLEAR OVERFLOW FLAG
+0008   100C           00061         BCF     PIR1,TMR1IF     
+                      00062 
+0009   1C8B           00063         BTFSS   INTCON, INTF    ; based on INTCON INTF Bit
+000A   2???           00064         GOTO    ISR_FOR_TIMER
+000B   2???           00065         GOTO    ISR_FOR_BTN
+                      00066 
+000C                  00067 RESET_TIMER
+000C   3000           00068         MOVLW   0
+000D   1283 1303      00069         BANKSEL TMR1L
+000F   008E           00070         MOVWF   TMR1L
+0010   008F           00071         MOVWF   TMR1H
+0011   3008           00072         MOVLW   8
+0012   1283 1303      00073         BANKSEL TIMER_INDEX
+0014   00A8           00074         MOVWF   TIMER_INDEX
+0015   0008           00075         RETURN
                       00076 
-0016                  00077 ISR_FOR_TIMER
-                      00078 
-                      00079 ; TODO increment_letter, check if Z, check if space
-                      00080 
-0016   1283 1303      00081         BANKSEL TIMER_INDEX
+                      00077 
+0016                  00078 ISR_FOR_TIMER
+                      00079 
+                      00080 ; TODO increment_letter, check if Z, check if space
+                      00081 
+0016   1283 1303      00082         BANKSEL TIMER_INDEX
 Message[305]: Using default destination of 1 (file).
-0018   0BA8           00082         DECFSZ  TIMER_INDEX
-0019   2???           00083         GOTO    SKIP1
-                      00084 
-001A   2???           00085         CALL    MOVE_TO_NEXT_CHAR
-001B   3008           00086         MOVLW   8
-001C   1283 1303      00087         BANKSEL TIMER_INDEX
-001E   00A8           00088         MOVWF   TIMER_INDEX
-001F   1283 1303      00089         BANKSEL CURRENT_CHAR
-0021   0826           00090         MOVF CURRENT_CHAR, W
-0022   3C21           00091         SUBLW 0x21 ; ASCII Of Space + 1 
-0023   1D03           00092         BTFSS   STATUS, Z
-0024   2???           00093         GOTO    SKIP1
-                      00094         ; CALL  FINISH_STRING
-                      00095 
-0025                  00096 SKIP1
-0025   100C           00097     BCF         PIR1,TMR1IF     ; clear the TMR1 ov flag 
-0026   108B           00098         BCF             INTCON,INTF             ; clear the External Interrupt Flag bit
-0027   0009           00099     RETFIE
-                      00100 
+0018   0BA8           00083         DECFSZ  TIMER_INDEX
+0019   2???           00084         GOTO    SKIP1
+                      00085 
+001A   2???           00086         CALL    MOVE_TO_NEXT_CHAR
+001B   3008           00087         MOVLW   8
+001C   1283 1303      00088         BANKSEL TIMER_INDEX
+001E   00A8           00089         MOVWF   TIMER_INDEX
+001F   1283 1303      00090         BANKSEL CURRENT_CHAR
+0021   0826           00091         MOVF CURRENT_CHAR, W
+0022   3C21           00092         SUBLW 0x21 ; ASCII Of Space + 1 
+0023   1D03           00093         BTFSS   STATUS, Z
+0024   2???           00094         GOTO    SKIP1
+                      00095         ; CALL  FINISH_STRING
+                      00096 
+0025                  00097 SKIP1
+0025   100C           00098     BCF         PIR1,TMR1IF     ; clear the TMR1 ov flag 
+0026   108B           00099         BCF             INTCON,INTF             ; clear the External Interrupt Flag bit
+0027   0009           00100     RETFIE
                       00101 
-0028                  00102 ISR_FOR_BTN
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  3
+                      00102 
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00103 
-0028   2???           00104     CALL INCREMENT_CURRENT_CHAR
-0029   2???           00105     CALL CHECK_IF_Z
-002A   2???           00106         CALL CHECK_IF_SPACE
-002B   2???           00107         CALL TEST_CHECK_TO_MOVE
-                      00108 
+0028                  00103 ISR_FOR_BTN
+                      00104 
+0028   2???           00105     CALL INCREMENT_CURRENT_CHAR
+0029   2???           00106     CALL CHECK_IF_Z
+002A   2???           00107         CALL CHECK_IF_SPACE
+002B   2???           00108         CALL TEST_CHECK_TO_MOVE
                       00109 
-002C   2???           00110         CALL DISPLAY_CURRENT_CHAR
-                      00111 
-                      00112         ; TODO increment_letter, check if Z, check if space
-                      00113 
-002D   100C           00114     BCF         PIR1,TMR1IF     ; clear the TMR1 ov flag 
-002E   108B           00115         BCF             INTCON,INTF             ; clear the Interrupt flag 
-002F   0009           00116     RETFIE
-                      00117 
-0030                  00118 SETUP_PORTS_DIGITAL
-                      00119 
-0030   1683 1303      00120         BANKSEL ADCON1
-0032   3006           00121         MOVLW   0x06            ; Disable A/D Conversion
+                      00110 
+002C   2???           00111         CALL DISPLAY_CURRENT_CHAR
+                      00112 
+                      00113         ; TODO increment_letter, check if Z, check if space
+                      00114 
+002D   100C           00115     BCF         PIR1,TMR1IF     ; clear the TMR1 ov flag 
+002E   108B           00116         BCF             INTCON,INTF             ; clear the Interrupt flag 
+002F   0009           00117     RETFIE
+                      00118 
+0030                  00119 SETUP_PORTS_DIGITAL
+                      00120 
+0030   1683 1303      00121         BANKSEL ADCON1
+0032   3006           00122         MOVLW   0x06            ; Disable A/D Conversion
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0033   009F           00122         MOVWF   ADCON1
-                      00123 
-0034   1683 1303      00124         BANKSEL CMCON 
-0036   3007           00125         MOVLW   0x07            ; Disable Comparator
+0033   009F           00123         MOVWF   ADCON1
+                      00124 
+0034   1683 1303      00125         BANKSEL CMCON 
+0036   3007           00126         MOVLW   0x07            ; Disable Comparator
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0037   009C           00126         MOVWF   CMCON
-                      00127 
-0038   0008           00128         RETURN
-                      00129 
+0037   009C           00127         MOVWF   CMCON
+                      00128 
+0038   0008           00129         RETURN
                       00130 
-0039                  00131 SETUP_INTERRUPTS
-                      00132 
-0039   1683 1303      00133         BANKSEL TRISB   
-                      00134 
+                      00131 
+0039                  00132 SETUP_INTERRUPTS
+                      00133 
+0039   1683 1303      00134         BANKSEL TRISB   
+                      00135 
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-003B   1406           00135         BSF TRISB, 0x00 ; Set Port B Direction To Input
+003B   1406           00136         BSF TRISB, 0x00 ; Set Port B Direction To Input
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-003C   1701           00136         BSF OPTION_REG, INTEDG ; Rising Edge
-003D   108B           00137         BCF INTCON,INTF ; Clear Interrupt Flag
-003E   160B           00138         BSF INTCON,INTE ; Enable RB0 Interrupt Bit 
-003F   178B           00139         BSF INTCON,GIE ; Enable Global Interrupt Bit
-                      00140 
-0040   1283 1303      00141         BANKSEL T1CON   ;setup timer1
-                      00142 
-0042   0810           00143         MOVF    T1CON,W
-0043   3839           00144         IORLW   b'00111001' ; 8 prescale/oscilator enabled/synchronized/internal/timer1enabled
-0044   0090           00145         MOVWF   T1CON  
-                      00146 
-0045   0008           00147         RETURN
-                      00148 
+003C   1701           00137         BSF OPTION_REG, INTEDG ; Rising Edge
+003D   108B           00138         BCF INTCON,INTF ; Clear Interrupt Flag
+003E   160B           00139         BSF INTCON,INTE ; Enable RB0 Interrupt Bit 
+003F   178B           00140         BSF INTCON,GIE ; Enable Global Interrupt Bit
+                      00141 
+0040   1283 1303      00142         BANKSEL T1CON   ;setup timer1
+                      00143 
+0042   0810           00144         MOVF    T1CON,W
+0043   3839           00145         IORLW   b'00111001' ; 8 prescale/oscilator enabled/synchronized/internal/timer1enabled
+0044   0090           00146         MOVWF   T1CON  
+                      00147 
+0045   0008           00148         RETURN
                       00149 
-0046                  00150 INIT_DEBUG_PORT
-                      00151 
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  4
+                      00150 
+0046                  00151 INIT_DEBUG_PORT
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00152         ; port c is used for debugging
-0046   1683 1303      00153         BANKSEL TRISC
-0048   3000           00154         MOVLW   0x00            ; In order to set PORTC Direction to output
+                      00152 
+                      00153         ; port c is used for debugging
+0046   1683 1303      00154         BANKSEL TRISC
+0048   3000           00155         MOVLW   0x00            ; In order to set PORTC Direction to output
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0049   0087           00155         MOVWF   TRISC
-004A   1283 1303      00156         BANKSEL T1CON
-004C   0810           00157         MOVF    T1CON,W
-004D   3839           00158         IORLW   b'00111001'
-004E   0090           00159         MOVWF   T1CON
-004F   3008           00160         MOVLW   8
-0050   00A8           00161         MOVWF   TIMER_INDEX
-0051   0008           00162         RETURN
-                      00163 
+0049   0087           00156         MOVWF   TRISC
+004A   1283 1303      00157         BANKSEL T1CON
+004C   0810           00158         MOVF    T1CON,W
+004D   3839           00159         IORLW   b'00111001'
+004E   0090           00160         MOVWF   T1CON
+004F   3008           00161         MOVLW   8
+0050   00A8           00162         MOVWF   TIMER_INDEX
+0051   0008           00163         RETURN
                       00164 
                       00165 
-0052                  00166 START_EXECUTION
-                      00167 
-0052   2???           00168         CALL INIT_DEBUG_PORT
-0053   2???           00169         CALL SETUP_INTERRUPTS
-0054   2???           00170         CALL SETUP_PORTS_DIGITAL
-                      00171 
-0055   1383           00172         BANKISEL CURRENT_CHAR_INDEX
-0056   1283 1303      00173         BANKSEL CURRENT_CHAR_INDEX
-                      00174 
-0058   3035           00175         MOVLW C1
-0059   00B0           00176         MOVWF CURRENT_CHAR_INDEX
+                      00166 
+0052                  00167 START_EXECUTION
+                      00168 
+0052   2???           00169         CALL INIT_DEBUG_PORT
+0053   2???           00170         CALL SETUP_INTERRUPTS
+0054   2???           00171         CALL SETUP_PORTS_DIGITAL
+                      00172 
+0055   1383           00173         BANKISEL CURRENT_CHAR_INDEX
+0056   1283 1303      00174         BANKSEL CURRENT_CHAR_INDEX
+                      00175 
+                      00176         
                       00177 
                       00178          
                       00179 
                       00180 
-005A   00A2           00181         MOVWF   LCD_CUSROR      ; Store the value in the LCD_CUSROR register
+                      00181 
                       00182 
-005B   3041           00183         MOVLW   ACHAR           ; Load initial value of char 'A' To W
-005C   00A3           00184         MOVWF   currentCharReg  ; Store the value in the currentCharReg register
+0058   2???           00183         CALL    SETUP_LCD ; Initialise the display FOR LCD
+0059   2???           00184         CALL    LCD_WRITE_PROMPT; write the promp "Enter String:"
                       00185 
-005D   2???           00186         CALL    SETUP_LCD ; Initialise the display FOR LCD
-005E   2???           00187         CALL    LCD_WRITE_PROMPT; write the promp "Enter String:"
-                      00188 
-005F   2???           00189         CALL    MOVE_CURSOR_TO_LINE_2_WRITE_A
+005A   2???           00186         CALL    MOVE_CURSOR_TO_LINE_2_WRITE_A
+                      00187 
+005B   3035           00188     MOVLW C1
+005C   00B0           00189         MOVWF CURRENT_CHAR_INDEX
                       00190 
-                      00191 
-0060   2???           00192         CALL    LABEL_REACH ; announce reaching this line
-                      00193 
+005D   01A9           00191         CLRF COUNT
+                      00192         
+005E   2???           00193         CALL    BLINK_CURSOR ; blink cursor
                       00194 
                       00195 
-                      00196 ; used to announce reaching a section of the code
-0061                  00197 LABEL_REACH
-                      00198 
-0061   1283 1303      00199     BANKSEL PORTC
-0063   0187           00200         CLRF PORTC
-                      00201     
-0064   3080           00202         MOVLW   0x80 ; set delay loop to 60 iterations
-                      00203 
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  5
+                      00196 
+                      00197 ; used to announce reaching a section of the code
+005F                  00198 BLINK_CURSOR
+                      00199 
+005F   300E           00200         MOVLW   0x0E ; cursor blink
+0060   2???           00201         CALL    PulseWriteCmdToLCD ; send command
+                      00202 
+                      00203         ; delay 10ms * 20 = 200ms
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-0065   1407           00204         BSF PORTC,0
-0066   2???           00205         CALL DELAY_W
-0067   1487           00206         BSF PORTC,1
-0068   2???           00207         CALL DELAY_W
-                      00208 
-0069   30FF           00209         MOVLW   0xFF ; set delay loop to 255 iteration
-006A   2???           00210         CALL DELAY_W
-                      00211 
-006B   1007           00212         BCF PORTC,0
-006C   1087           00213         BCF PORTC,1
-                      00214 
-006D   2???           00215         CALL DELAY_W
-                      00216 
-006E   2???           00217         GOTO LABEL_REACH ; loop for ever
-                      00218 
-                      00219 ; 200 instructions delay
-006F                  00220 DELAY_W 
-006F   00F5           00221         MOVWF   TEMP
-0070                  00222 loop_start
-                      00223 
-0070   0000           00224         NOP
-0071   0000           00225         NOP
-0072   0000           00226         NOP
-0073   0000           00227         NOP
-0074   0000           00228         NOP
-0075   0000           00229         NOP
-                      00230 
+0061   3014           00204         MOVLW 0x14
+0062   2???           00205         CALL DELAY_W_10_MS
+                      00206 
+0063   300C           00207         MOVLW   0x0C ; cursor off
+0064   2???           00208         CALL    PulseWriteCmdToLCD ; send command
+                      00209 
+                      00210         ; delay 10ms * 20 = 200ms
+0065   3014           00211         MOVLW 0x14
+0066   2???           00212         CALL DELAY_W_10_MS
+                      00213 
+0067   2???           00214         GOTO BLINK_CURSOR ; loop for ever
+                      00215 
+                      00216 ; instruction delay of 10us * W (each instruction is 1us)
+0068                  00217 DELAY_W 
+0068   00F5           00218         MOVWF   TEMP
+0069                  00219 loop_start
+                      00220 
+0069   0000           00221         NOP
+006A   0000           00222         NOP
+006B   0000           00223         NOP
+006C   0000           00224         NOP
+006D   0000           00225         NOP
+006E   0000           00226         NOP
+006F   0000           00227         NOP
+0070   0000           00228         NOP
+0071   0000           00229         NOP
+0072   0000           00230         NOP
+                      00231 
 Message[305]: Using default destination of 1 (file).
-0076   0BF5           00231         DECFSZ  TEMP
-0077   2???           00232         GOTO    loop_start
-0078   0008           00233         RETURN
-                      00234 
-                      00235 ;--------------------------------------------------------------Start LCD CODE---------------------------
+0073   0BF5           00232         DECFSZ  TEMP
+0074   2???           00233         GOTO    loop_start
+0075   0008           00234         RETURN
+                      00235 
+                      00236 ; instruction delay of ms * W (each loop is 10ms)
+0076                  00237 DELAY_W_10_MS   
+0076   00F6           00238         MOVWF   TEMP2
+0077   30FA           00239         MOVLW   0xFA
+0078                  00240 lp_st
+                      00241     
+0078   2???           00242         CALL DELAY_W
+0079   2???           00243         CALL DELAY_W
+007A   2???           00244         CALL DELAY_W
+007B   2???           00245         CALL DELAY_W
+                      00246 
+Message[305]: Using default destination of 1 (file).
+007C   0BF6           00247         DECFSZ  TEMP2
+007D   2???           00248         GOTO    lp_st
+007E   0008           00249         RETURN
+                      00250 
+                      00251 ;--------------------------------------------------------------Start LCD CODE---------------------------
                             -------
-                      00236 ;       1ms delay with 1us instruction time (1000 cycles)
-                      00237 ;--------------------------------------------------------------
-0079   30F9           00238 onems   MOVLW   D'249'          ; Count for 1ms delay 
-007A   00F0           00239         MOVWF   Timer1          ; Load count
-007B   0000           00240 LP      NOP                     ; Pad for 4 cycle loop
-Message[305]: Using default destination of 1 (file).
-007C   0BF0           00241         DECFSZ  Timer1          ; Count
-007D   2???           00242         GOTO    LP              ; until Z
-007E   0008           00243         RETURN                  ; and finish
-                      00244 
-                      00245 ;--------------------------------------------------------------
-                      00246 ;       Generate data/command clock siganl E
-                      00247 ;--------------------------------------------------------------
-007F   1688           00248 PULSE_LCD_E_PIN BSF     PORTD, LCD_E_PIN                ; Set E high
-0080   2???           00249         CALL    onems           ; Delay 1ms
-0081   1288           00250         BCF     PORTD, LCD_E_PIN                ; Reset E low
-0082   2???           00251         CALL    onems           ; Delay 1ms
-0083   0008           00252         RETURN                  ; done
-                      00253 
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  6
+                      00252 ;       1ms delay with 1us instruction time (1000 cycles)
+                      00253 ;--------------------------------------------------------------
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00254 
-                      00255 ;--------------------------------------------------------------
-                      00256 ;       Initialise the display
-                      00257 ;--------------------------------------------------------------
-0084                  00258 SETUP_LCD       
-                      00259 
-0084   1683 1303      00260         BANKSEL TRISD
+007F   30F9           00254 onems   MOVLW   D'249'          ; Count for 1ms delay 
+0080   00F0           00255         MOVWF   Timer1          ; Load count
+0081   0000           00256 LP      NOP                     ; Pad for 4 cycle loop
+Message[305]: Using default destination of 1 (file).
+0082   0BF0           00257         DECFSZ  Timer1          ; Count
+0083   2???           00258         GOTO    LP              ; until Z
+0084   0008           00259         RETURN                  ; and finish
+                      00260 
+                      00261 ;--------------------------------------------------------------
+                      00262 ;       Generate data/command clock siganl E
+                      00263 ;--------------------------------------------------------------
+0085   1688           00264 PULSE_LCD_E_PIN BSF     PORTD, LCD_E_PIN                ; Set E high
+0086   2???           00265         CALL    onems           ; Delay 1ms
+0087   1288           00266         BCF     PORTD, LCD_E_PIN                ; Reset E low
+0088   2???           00267         CALL    onems           ; Delay 1ms
+0089   0008           00268         RETURN                  ; done
+                      00269 
+                      00270 
+                      00271 ;--------------------------------------------------------------
+                      00272 ;       Initialise the display
+                      00273 ;--------------------------------------------------------------
+008A                  00274 SETUP_LCD       
+                      00275 
+008A   1683 1303      00276         BANKSEL TRISD
 Message[302]: Register in operand not in bank 0.  Ensure that bank bits are correct.
-0086   0188           00261         CLRF TRISD ; Port D as output to LCD
-                      00262 
-0087   1283 1303      00263         BANKSEL PORTD
-                      00264 
-0089   0188           00265         CLRF    PORTD           ; and output it to display
-                      00266 
-008A   3040           00267         MOVLW   0x40            ; wait for display start
-008B   2???           00268         CALL    DELAY_W
-                      00269         
-                      00270         
-008C   3002           00271         MOVLW   0x02    ; Set 4-bit mode
-008D   2???           00272         CALL    PulseWriteCmdToLCD ; send command
-                      00273         
-008E   3028           00274         MOVLW   0x28            ; Set 5 by 7 mode
-008F   2???           00275         CALL    PulseWriteCmdToLCD ; send command
-                      00276 
-                      00277         ; TODO remove
-                      00278         ; MOVLW 0x08            ; Switch off display
-                      00279         ; CALL  PulseWriteCmdToLCD ; send command
+008C   0188           00277         CLRF TRISD ; Port D as output to LCD
+                      00278 
+008D   1283 1303      00279         BANKSEL PORTD
                       00280 
-0090   3001           00281         MOVLW   0x01            ; Code to clear display
-0091   2???           00282         CALL    PulseWriteCmdToLCD ; send command
-                      00283 
-0092   300E           00284         MOVLW   0x0E            ; Display ON and cursor blinking
-0093   2???           00285     CALL        PulseWriteCmdToLCD      ; send command
-                      00286 
-                      00287         ; MOVLW 0x06            ; Enable cursor auto inc  
-                      00288         ; CALL  PulseWriteCmdToLCD ; send command
-                      00289 
-0094   3080           00290         MOVLW   0x80            ; move cursor to first line, first column
+008F   0188           00281         CLRF    PORTD           ; and output it to display
+                      00282 
+0090   3040           00283         MOVLW   0x40            ; wait for display start
+0091   2???           00284         CALL    DELAY_W
+                      00285         
+                      00286         
+0092   3002           00287         MOVLW   0x02    ; Set 4-bit mode
+0093   2???           00288         CALL    PulseWriteCmdToLCD ; send command
+                      00289         
+0094   3028           00290         MOVLW   0x28            ; Set 5 by 7 mode
 0095   2???           00291         CALL    PulseWriteCmdToLCD ; send command
                       00292 
-0096   300C           00293         MOVLW   0x0C            ; Turn on display  
-0097   2???           00294         CALL    PulseWriteCmdToLCD ; send command
-                      00295 
-0098   0008           00296         RETURN                  ; Done
-                      00297 
-                      00298 
-0099                  00299 PulseWriteCmdToLCD
-0099   00F5           00300         MOVWF TEMP
-Message[305]: Using default destination of 1 (file).
-009A   0EF5           00301         SWAPF TEMP
-009B   0875           00302         MOVF TEMP, W
-009C   390F           00303         ANDLW 0x0f
-009D   0088           00304         MOVWF PORTD
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  7
+                      00293         ; TODO remove
+                      00294         ; MOVLW 0x08            ; Switch off display
+                      00295         ; CALL  PulseWriteCmdToLCD ; send command
+                      00296 
+0096   3001           00297         MOVLW   0x01            ; Code to clear display
+0097   2???           00298         CALL    PulseWriteCmdToLCD ; send command
+                      00299 
+0098   300E           00300         MOVLW   0x0E            ; Display ON and cursor blinking
+0099   2???           00301     CALL        PulseWriteCmdToLCD      ; send command
+                      00302 
+                      00303         ; MOVLW 0x06            ; Enable cursor auto inc  
+                      00304         ; CALL  PulseWriteCmdToLCD ; send command
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-009E   1208           00305         BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
-009F   2???           00306         call PULSE_LCD_E_PIN
-                      00307         ;call onems
+                      00305 
+009A   3080           00306         MOVLW   0x80            ; move cursor to first line, first column
+009B   2???           00307         CALL    PulseWriteCmdToLCD ; send command
+                      00308 
+009C   300C           00309         MOVLW   0x0C            ; Turn on display  
+009D   2???           00310         CALL    PulseWriteCmdToLCD ; send command
+                      00311 
+009E   0008           00312         RETURN                  ; Done
+                      00313 
+                      00314 
+009F                  00315 PulseWriteCmdToLCD
+009F   00F5           00316         MOVWF TEMP
 Message[305]: Using default destination of 1 (file).
-00A0   0EF5           00308         SWAPF TEMP
-00A1   0875           00309         movf TEMP, W
-00A2   390F           00310         ANDLW   0x0f
-00A3   0088           00311         MOVWF PORTD
-00A4   1208           00312         BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
-00A5   2???           00313         call PULSE_LCD_E_PIN
-00A6   0008           00314         RETURN
-                      00315 
-                      00316 ;--------------------------------------------------------------
-                      00317 ;       Send a char byte
-                      00318 ;--------------------------------------------------------------
-00A7                  00319 PulseWriteCharToLCD
-00A7   00F5           00320     MOVWF TEMP
+00A0   0EF5           00317         SWAPF TEMP
+00A1   0875           00318         MOVF TEMP, W
+00A2   390F           00319         ANDLW 0x0f
+00A3   0088           00320         MOVWF PORTD
+00A4   1208           00321         BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
+00A5   2???           00322         call PULSE_LCD_E_PIN
+                      00323         ;call onems
 Message[305]: Using default destination of 1 (file).
-00A8   0EF5           00321     SWAPF TEMP
-00A9   0875           00322     MOVF TEMP, W
-00AA   390F           00323     ANDLW 0x0F ; Clear low nybble
-00AB   0088           00324     MOVWF PORTD
-00AC   1608           00325     BSF PORTD, LCD_RS_PIN ; set character mode on RS
-00AD   2???           00326     call PULSE_LCD_E_PIN ; clock LCD
-00AE   2???           00327     call onems
+00A6   0EF5           00324         SWAPF TEMP
+00A7   0875           00325         movf TEMP, W
+00A8   390F           00326         ANDLW   0x0f
+00A9   0088           00327         MOVWF PORTD
+00AA   1208           00328         BCF PORTD, LCD_RS_PIN ;Clearing the LCD_RS_PIN Register for command mode
+00AB   2???           00329         call PULSE_LCD_E_PIN
+00AC   0008           00330         RETURN
+                      00331 
+                      00332 ;--------------------------------------------------------------
+                      00333 ;       Send a char byte
+                      00334 ;--------------------------------------------------------------
+00AD                  00335 PulseWriteCharToLCD
+00AD   00F5           00336     MOVWF TEMP
 Message[305]: Using default destination of 1 (file).
-00AF   0EF5           00328     SWAPF TEMP
-00B0   0875           00329     MOVF TEMP, W
-00B1   390F           00330     ANDLW       0x0F ; Clear high nybble
-00B2   0088           00331     MOVWF PORTD
-00B3   1608           00332     BSF PORTD, LCD_RS_PIN 
-00B4   2???           00333     call PULSE_LCD_E_PIN 
-00B5   0008           00334     RETURN
-                      00335 
-00B6                  00336 MOVE_CURSOR_TO_LINE_2_WRITE_A
-                      00337 
-00B6   30C0           00338         MOVLW   0xC0            
-00B7   2???           00339         CALL    PulseWriteCmdToLCD ; send command
-                      00340 
-00B8   3041           00341         MOVLW 'A'
-00B9   00A6           00342         MOVWF CURRENT_CHAR ; move A to current char
-                      00343 
-00BA   2???           00344         CALL DISPLAY_CURRENT_CHAR
-                      00345 
-00BB   0008           00346         RETURN
-                      00347 
-                      00348 
-                      00349 
-                      00350 
+00AE   0EF5           00337     SWAPF TEMP
+00AF   0875           00338     MOVF TEMP, W
+00B0   390F           00339     ANDLW 0x0F ; Clear low nybble
+00B1   0088           00340     MOVWF PORTD
+00B2   1608           00341     BSF PORTD, LCD_RS_PIN ; set character mode on RS
+00B3   2???           00342     call PULSE_LCD_E_PIN ; clock LCD
+00B4   2???           00343     call onems
+Message[305]: Using default destination of 1 (file).
+00B5   0EF5           00344     SWAPF TEMP
+00B6   0875           00345     MOVF TEMP, W
+00B7   390F           00346     ANDLW       0x0F ; Clear high nybble
+00B8   0088           00347     MOVWF PORTD
+00B9   1608           00348     BSF PORTD, LCD_RS_PIN 
+00BA   2???           00349     call PULSE_LCD_E_PIN 
+00BB   0008           00350     RETURN
                       00351 
-00BC                  00352 DISPLAY_CURRENT_CHAR
+00BC                  00352 MOVE_CURSOR_TO_LINE_2_WRITE_A
                       00353 
-00BC   300C           00354     MOVLW       0x0C    ; turn cursor off
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  8
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
+00BC   30C0           00354         MOVLW   0xC0            
 00BD   2???           00355         CALL    PulseWriteCmdToLCD ; send command
                       00356 
-00BE   0826           00357     MOVF CURRENT_CHAR, W
-00BF   2???           00358         CALL PulseWriteCharToLCD
+00BE   3041           00357         MOVLW 'A'
+00BF   00A6           00358         MOVWF CURRENT_CHAR ; move A to current char
                       00359 
-00C0   3010           00360         MOVLW   0x10 ; shift cursor to left
-00C1   2???           00361         CALL    PulseWriteCmdToLCD ; send command
-                      00362 
-00C2   300E           00363     MOVLW       0x0E    ; turn cursor on
-00C3   2???           00364         CALL    PulseWriteCmdToLCD ; send command
-                      00365         
-00C4   0008           00366         RETURN
+00C0   2???           00360         CALL DISPLAY_CURRENT_CHAR
+                      00361 
+00C1   0008           00362         RETURN
+                      00363 
+                      00364 
+                      00365 
+                      00366 
                       00367 
-00C5                  00368 LCD_WRITE_PROMPT 
+00C2                  00368 DISPLAY_CURRENT_CHAR
                       00369 
-00C5   3080           00370         MOVLW   0x80            ; move cursor to first line, first column
-00C6   2???           00371         CALL    PulseWriteCmdToLCD ; send command
+00C2   300C           00370     MOVLW       0x0C    ; turn cursor off
+00C3   2???           00371         CALL    PulseWriteCmdToLCD ; send command
                       00372 
-00C7   3045           00373         MOVLW 'E';
-00C8   2???           00374         CALL PulseWriteCharToLCD;
+00C4   0826           00373     MOVF CURRENT_CHAR, W
+00C5   2???           00374         CALL PulseWriteCharToLCD
                       00375 
-00C9   306E           00376         MOVLW 'n';
-00CA   2???           00377         CALL PulseWriteCharToLCD;
+00C6   3010           00376         MOVLW   0x10 ; shift cursor to left
+00C7   2???           00377         CALL    PulseWriteCmdToLCD ; send command
                       00378 
-00CB   3074           00379         MOVLW 't';
-00CC   2???           00380         CALL PulseWriteCharToLCD;
-                      00381 
-00CD   3065           00382         MOVLW 'e'; 
-00CE   2???           00383         CALL PulseWriteCharToLCD;
-                      00384 
-00CF   3072           00385         MOVLW 'r';
-00D0   2???           00386         CALL PulseWriteCharToLCD;
-                      00387 
-00D1   3020           00388         MOVLW ' ';
-00D2   2???           00389         CALL PulseWriteCharToLCD;
-                      00390 
-00D3   3053           00391         MOVLW 'S';
-00D4   2???           00392         CALL PulseWriteCharToLCD;
-                      00393 
-00D5   3074           00394         MOVLW 't';
-00D6   2???           00395         CALL PulseWriteCharToLCD;
-                      00396 
-00D7   3072           00397         MOVLW 'r';
-00D8   2???           00398         CALL PulseWriteCharToLCD;
-                      00399 
-00D9   3069           00400         MOVLW 'i';
-00DA   2???           00401         CALL PulseWriteCharToLCD;
-                      00402 
-00DB   306E           00403         MOVLW 'n'; 
-00DC   2???           00404         CALL PulseWriteCharToLCD;
-                      00405 
-00DD   3067           00406         MOVLW 'g';
-00DE   2???           00407         CALL PulseWriteCharToLCD;
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE  9
+00C8   300E           00379     MOVLW       0x0E    ; turn cursor on
+00C9   2???           00380         CALL    PulseWriteCmdToLCD ; send command
+                      00381         
+00CA   0008           00382         RETURN
+                      00383 
+00CB                  00384 LCD_WRITE_PROMPT 
+                      00385 
+00CB   3080           00386         MOVLW   0x80            ; move cursor to first line, first column
+00CC   2???           00387         CALL    PulseWriteCmdToLCD ; send command
+                      00388 
+00CD   3045           00389         MOVLW 'E';
+00CE   2???           00390         CALL PulseWriteCharToLCD;
+                      00391 
+00CF   306E           00392         MOVLW 'n';
+00D0   2???           00393         CALL PulseWriteCharToLCD;
+                      00394 
+00D1   3074           00395         MOVLW 't';
+00D2   2???           00396         CALL PulseWriteCharToLCD;
+                      00397 
+00D3   3065           00398         MOVLW 'e'; 
+00D4   2???           00399         CALL PulseWriteCharToLCD;
+                      00400 
+00D5   3072           00401         MOVLW 'r';
+00D6   2???           00402         CALL PulseWriteCharToLCD;
+                      00403 
+00D7   3020           00404         MOVLW ' ';
+00D8   2???           00405         CALL PulseWriteCharToLCD;
+                      00406 
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00408 
-00DF   303A           00409         MOVLW ':';
-00E0   2???           00410         CALL PulseWriteCharToLCD;
-                      00411 
-00E1   0008           00412         RETURN
-                      00413 
-                      00414 ; ----------------------------- LOGIC -----------------------------
+00D9   3053           00407         MOVLW 'S';
+00DA   2???           00408         CALL PulseWriteCharToLCD;
+                      00409 
+00DB   3074           00410         MOVLW 't';
+00DC   2???           00411         CALL PulseWriteCharToLCD;
+                      00412 
+00DD   3072           00413         MOVLW 'r';
+00DE   2???           00414         CALL PulseWriteCharToLCD;
                       00415 
-00E2                  00416 CHECK_IF_SPACE
-                      00417 
-00E2   0826           00418     MOVF CURRENT_CHAR, W
-00E3   3C21           00419         SUBLW 0x21 ; ASCII Of Space + 1
-                      00420 
-00E4   1D03           00421         BTFSS STATUS, Z ; Test zero & skip
-00E5   0008           00422     RETURN
-                      00423 
-00E6   3041           00424         MOVLW 'A'
-00E7   00A6           00425         MOVWF CURRENT_CHAR ; move A to current char
-                      00426 
-00E8   0008           00427         RETURN
-                      00428 
-00E9                  00429 CHECK_IF_Z
-00E9   0826           00430         MOVF CURRENT_CHAR, W
-00EA   3C5B           00431         SUBLW 0x5B ; ASCII Of 'Z' + 1
-                      00432 
-00EB   1D03           00433         BTFSS STATUS, Z ; Test zero & skip
-00EC   0008           00434     RETURN
-                      00435 
-00ED   3020           00436         MOVLW ' '
-00EE   00A6           00437         MOVWF CURRENT_CHAR ; move A to current char
-                      00438 
-00EF   0008           00439         RETURN
-                      00440 
-                      00441 
-00F0                  00442 TEST_CHECK_TO_MOVE
-00F0   0826           00443         MOVF CURRENT_CHAR, W
-00F1   3C45           00444         SUBLW 0x45 ; ASCII Of 'X' + 1
-                      00445 
-00F2   1D03           00446         BTFSS STATUS, Z ; Test zero & skip
-00F3   0008           00447     RETURN
+00DF   3069           00416         MOVLW 'i';
+00E0   2???           00417         CALL PulseWriteCharToLCD;
+                      00418 
+00E1   306E           00419         MOVLW 'n'; 
+00E2   2???           00420         CALL PulseWriteCharToLCD;
+                      00421 
+00E3   3067           00422         MOVLW 'g';
+00E4   2???           00423         CALL PulseWriteCharToLCD;
+                      00424 
+00E5   303A           00425         MOVLW ':';
+00E6   2???           00426         CALL PulseWriteCharToLCD;
+                      00427 
+00E7   0008           00428         RETURN
+                      00429 
+                      00430 ; ----------------------------- LOGIC -----------------------------
+                      00431 
+00E8                  00432 CHECK_IF_SPACE
+                      00433 
+00E8   0826           00434     MOVF CURRENT_CHAR, W
+00E9   3C21           00435         SUBLW 0x21 ; ASCII Of Space + 1
+                      00436 
+00EA   1D03           00437         BTFSS STATUS, Z ; Test zero & skip
+00EB   0008           00438     RETURN
+                      00439 
+00EC   3041           00440         MOVLW 'A'
+00ED   00A6           00441         MOVWF CURRENT_CHAR ; move A to current char
+                      00442 
+00EE   0008           00443         RETURN
+                      00444 
+00EF                  00445 CHECK_IF_Z
+00EF   0826           00446         MOVF CURRENT_CHAR, W
+00F0   3C5B           00447         SUBLW 0x5B ; ASCII Of 'Z' + 1
                       00448 
-00F4   2???           00449         CALL MOVE_TO_NEXT_CHAR
-                      00450 
-00F5   0008           00451         RETURN
-                      00452 
-00F6                  00453 INCREMENT_CURRENT_CHAR
+00F1   1D03           00449         BTFSS STATUS, Z ; Test zero & skip
+00F2   0008           00450     RETURN
+                      00451 
+00F3   3020           00452         MOVLW ' '
+00F4   00A6           00453         MOVWF CURRENT_CHAR ; move A to current char
                       00454 
-00F6   0AA6           00455     INCF CURRENT_CHAR, 1
+00F5   0008           00455         RETURN
                       00456 
-00F7   0008           00457         RETURN
-                      00458 
-00F8                  00459 MOVE_TO_NEXT_CHAR
-                      00460 
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 10
+                      00457 
+00F6                  00458 TEST_CHECK_TO_MOVE
+00F6   0826           00459         MOVF CURRENT_CHAR, W
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 10
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00F8   0183           00461     CLRF STATUS
-                      00462 
-00F9   1283 1303      00463         BANKSEL C1
-00FB   1383           00464         BANKISEL C1
-                      00465 
-00FC   1383           00466         BCF STATUS, IRP ; bank select for indirect
-                      00467 
-                      00468     
-                      00469         ; Load address of array pointer into FSR
-00FD   0830           00470         MOVF CURRENT_CHAR_INDEX, W
-                      00471 
-00FE   3035           00472         MOVLW C1
-00FF   0084           00473     MOVWF FSR
+00F7   3C45           00460         SUBLW 0x45 ; ASCII Of 'X' + 1
+                      00461 
+00F8   1D03           00462         BTFSS STATUS, Z ; Test zero & skip
+00F9   0008           00463     RETURN
+                      00464 
+00FA   2???           00465         CALL MOVE_TO_NEXT_CHAR
+                      00466 
+00FB   0008           00467         RETURN
+                      00468 
+00FC                  00469 INCREMENT_CURRENT_CHAR
+                      00470 
+00FC   0AA6           00471     INCF CURRENT_CHAR, 1
+                      00472 
+00FD   0008           00473         RETURN
                       00474 
-0100   1384           00475         BCF FSR, 0x7
-0101   1304           00476         BCF FSR, 0x6
-                      00477     
-                      00478         ; Load current char into w then into array ptr
-0102   0826           00479         MOVF CURRENT_CHAR, W
-0103   0080           00480         MOVWF INDF
+00FE                  00475 MOVE_TO_NEXT_CHAR
+                      00476 
+00FE   0183           00477     CLRF STATUS
+                      00478 
+00FF   1283 1303      00479         BANKSEL C1
+0101   1383           00480         BCF STATUS, IRP ; bank select for indirect
                       00481 
-0104   0AB0           00482         INCF CURRENT_CHAR_INDEX, 1
-                      00483 
-0105   3041           00484         MOVLW 'A'
-0106   00A6           00485         MOVWF CURRENT_CHAR ; move A to current char
-                      00486 
-0107   3014           00487         MOVLW   0x14 ; shift cursor to right
-0108   2???           00488         CALL    PulseWriteCmdToLCD ; send command
-                      00489 
-0109   0008           00490     RETURN
-                      00491 
-010A                  00492 DONE
-3731                  00493         END
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 11
+                      00482 
+                      00483         ; Load address of array pointer into FSR
+0102   0830           00484         MOVF CURRENT_CHAR_INDEX, W
+                      00485 
+0103   0000           00486         NOP
+                      00487         
+                      00488         
+0104   0084           00489     MOVWF FSR
+                      00490 
+0105   1383           00491         BANKISEL C1
+                      00492     
+                      00493         ; Load current char into w then into array ptr
+0106   0826           00494         MOVF CURRENT_CHAR, W
+0107   0080           00495         MOVWF INDF
+                      00496 
+0108   0AB0           00497         INCF CURRENT_CHAR_INDEX, 1
+                      00498 
+0109   3041           00499         MOVLW 'A'
+010A   00A6           00500         MOVWF CURRENT_CHAR ; move A to current char
+                      00501 
+010B   3014           00502         MOVLW   0x14 ; shift cursor to right
+010C   2???           00503         CALL    PulseWriteCmdToLCD ; send command
+                      00504 
+                      00505         ; check count ; -------------------
+                      00506 
+010D   0AA9           00507         INCF COUNT, 0x1
+                      00508 
+010E   0103           00509         CLRW 
+                      00510 
+010F   1103           00511         BCF STATUS, Z
+                      00512 
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 11
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0110   0829           00513         MOVF COUNT, W
+0111   3C02           00514         SUBLW MAX_CHARS
+0112   1903           00515         BTFSC   STATUS, Z ; if reached 5 go to FINISH_STRING
+0113   2???           00516         GOTO    FINISH_STRING
+                      00517 
+                      00518         ; ----------------------------------
+                      00519 
+                      00520 
+0114   0008           00521     RETURN
+                      00522 
+0115                  00523 FINISH_STRING
+                      00524 
+0115   3008           00525     MOVLW       0x08 ; turn off display
+0116   2???           00526         CALL    PulseWriteCmdToLCD ; send command
+                      00527 
+0117   1707           00528         BSF PORTC, 6
+                      00529 
+                      00530     ; delay 10ms * 100 = 1 s
+0118   3064           00531         MOVLW 0x64
+0119   2???           00532         CALL DELAY_W_10_MS
+                      00533 
+011A   3001           00534         MOVLW   0x01 ; clear display
+011B   2???           00535         CALL    PulseWriteCmdToLCD ; send command
+                      00536 
+011C   300C           00537         MOVLW   0x0C ; turn on display without cursor
+011D   2???           00538         CALL    PulseWriteCmdToLCD ; send command
+                      00539 
+011E   3080           00540         MOVLW   0x80 ; set cursor at begining of 1st line
+011F   2???           00541         CALL    PulseWriteCmdToLCD ; send command
+                      00542     
+                      00543 
+0120   03B5           00544     DECF C1, 1
+0121   03B6           00545         DECF C2, 1
+0122   03B7           00546         DECF C3, 1
+0123   03B8           00547         DECF C4, 1
+0124   03B9           00548         DECF C5, 1
+                      00549 
+0125   0835           00550     MOVF C1, W 
+0126   2???           00551         CALL    PulseWriteCharToLCD
+0127   0836           00552         MOVF C2, W 
+0128   2???           00553         CALL    PulseWriteCharToLCD
+0129   0837           00554         MOVF C3, W 
+012A   2???           00555         CALL    PulseWriteCharToLCD
+012B   0838           00556         MOVF C4, W 
+012C   2???           00557         CALL    PulseWriteCharToLCD
+012D   0839           00558         MOVF C5, W 
+012E   2???           00559         CALL    PulseWriteCharToLCD
+                      00560 
+                      00561 
+                      00562 
+012F   01C1           00563         CLRF CRS_LOCATION_IN_ANIMATION
+                      00564 
+                      00565 
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 12
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0130                  00566 MOVING_LOOP
+                      00567 
+0130   3080           00568     MOVLW       0x80 ; set cursor at begining of 1st line
+0131   2???           00569         CALL    PulseWriteCmdToLCD ; send command
+                      00570 
+0132   301C           00571     MOVLW       0x1C ; shift screen to the right
+0133   2???           00572         CALL    PulseWriteCmdToLCD ; send command
+                      00573     
+                      00574         ; delay 10ms * 50 = 500ms
+0134   3032           00575         MOVLW 0x32
+0135   2???           00576         CALL DELAY_W_10_MS
+                      00577 
+0136   0AC1           00578         INCF CRS_LOCATION_IN_ANIMATION, 1
+                      00579 
+0137   0841           00580         MOVF CRS_LOCATION_IN_ANIMATION, W
+0138   3C10           00581     SUBLW 0x10 ; column 16
+0139   1C03           00582     BTFSS STATUS, C
+013A   2???           00583     GOTO REACHED_LINE_END
+013B   2???           00584         GOTO MOVING_LOOP
+                      00585 
+                      00586 
+013C                  00587 REACHED_LINE_END
+                      00588 
+013C   3001           00589     MOVLW       0x01 ; clear screen
+013D   2???           00590         CALL    PulseWriteCmdToLCD ; send command
+                      00591 
+013E   30C0           00592         MOVLW   0xC0 ; set cursor at begining of 2nd line
+013F   2???           00593         CALL    PulseWriteCmdToLCD ; send command
+                      00594 
+0140   301C           00595         MOVLW   0x1C ; shift screen to the right
+0141   2???           00596         CALL    PulseWriteCmdToLCD ; send command
+0142   301C           00597         MOVLW   0x1C ; shift screen to the right
+0143   2???           00598         CALL    PulseWriteCmdToLCD ; send command
+0144   301C           00599         MOVLW   0x1C ; shift screen to the right
+0145   2???           00600         CALL    PulseWriteCmdToLCD ; send command
+0146   301C           00601         MOVLW   0x1C ; shift screen to the right
+0147   2???           00602         CALL    PulseWriteCmdToLCD ; send command
+0148   301C           00603         MOVLW   0x1C ; shift screen to the right
+0149   2???           00604         CALL    PulseWriteCmdToLCD ; send command
+014A   301C           00605         MOVLW   0x1C ; shift screen to the right
+014B   2???           00606         CALL    PulseWriteCmdToLCD ; send command
+014C   301C           00607         MOVLW   0x1C ; shift screen to the right
+014D   2???           00608         CALL    PulseWriteCmdToLCD ; send command
+014E   301C           00609         MOVLW   0x1C ; shift screen to the right
+014F   2???           00610         CALL    PulseWriteCmdToLCD ; send command
+0150   301C           00611         MOVLW   0x1C ; shift screen to the right
+0151   2???           00612         CALL    PulseWriteCmdToLCD ; send command
+0152   301C           00613         MOVLW   0x1C ; shift screen to the right
+0153   2???           00614         CALL    PulseWriteCmdToLCD ; send command
+0154   301C           00615         MOVLW   0x1C ; shift screen to the right
+0155   2???           00616         CALL    PulseWriteCmdToLCD ; send command
+0156   301C           00617         MOVLW   0x1C ; shift screen to the right
+0157   2???           00618         CALL    PulseWriteCmdToLCD ; send command
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 13
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+0158   301C           00619         MOVLW   0x1C ; shift screen to the right
+0159   2???           00620         CALL    PulseWriteCmdToLCD ; send command
+015A   301C           00621         MOVLW   0x1C ; shift screen to the right
+015B   2???           00622         CALL    PulseWriteCmdToLCD ; send command
+015C   301C           00623         MOVLW   0x1C ; shift screen to the right
+015D   2???           00624         CALL    PulseWriteCmdToLCD ; send command
+015E   301C           00625         MOVLW   0x1C ; shift screen to the right
+015F   2???           00626         CALL    PulseWriteCmdToLCD ; send command
+                      00627 
+0160   0835           00628         MOVF C1, W 
+0161   2???           00629         CALL    PulseWriteCharToLCD
+0162   0836           00630         MOVF C2, W 
+0163   2???           00631         CALL    PulseWriteCharToLCD
+0164   0837           00632         MOVF C3, W 
+0165   2???           00633         CALL    PulseWriteCharToLCD
+0166   0838           00634         MOVF C4, W 
+0167   2???           00635         CALL    PulseWriteCharToLCD
+0168   0839           00636         MOVF C5, W 
+0169   2???           00637         CALL    PulseWriteCharToLCD
+                      00638 
+016A                  00639 REACHED_LINE_END_LOOP
+                      00640 
+016A   3018           00641         MOVLW   0x18 ; shift screen to the left
+016B   2???           00642         CALL    PulseWriteCmdToLCD ; send command
+                      00643     
+                      00644         ; delay 10ms * 50 = 500ms
+016C   3032           00645         MOVLW 0x32
+016D   2???           00646         CALL DELAY_W_10_MS
+                      00647 
+016E   03C1           00648         DECF CRS_LOCATION_IN_ANIMATION, 1
+                      00649 
+016F   0841           00650         MOVF CRS_LOCATION_IN_ANIMATION, W
+0170   1903           00651     BTFSC STATUS, Z
+0171   2???           00652     GOTO MOVING_LOOP
+0172   2???           00653         GOTO REACHED_LINE_END_LOOP
+                      00654 
+                      00655     
+                      00656 
+                      00657 
+0173   2???           00658         GOTO MOVING_LOOP
+                      00659 
+0174   0008           00660         RETURN
+                      00661 
+0175                  00662 DONE
+3731                  00663         END
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 14
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-ACHAR                             00000041
 ACKDT                             00000005
 ACKEN                             00000004
 ACKSTAT                           00000006
@@ -592,6 +780,7 @@ ADRESL                            0000009E
 BCLIE                             00000003
 BCLIF                             00000003
 BF                                00000000
+BLINK_CURSOR                      0000005F
 BRGH                              00000002
 C                                 00000000
 C1                                00000035
@@ -625,9 +814,9 @@ CCPR1H                            00000016
 CCPR1L                            00000015
 CCPR2H                            0000001C
 CCPR2L                            0000001B
-CHECK_IF_SPACE                    000000E2
-CHECK_IF_Z                        000000E9
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 12
+CHECK_IF_SPACE                    000000E8
+CHECK_IF_Z                        000000EF
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 15
 
 
 SYMBOL TABLE
@@ -645,7 +834,9 @@ CM2                               00000002
 CMCON                             0000009C
 CMIE                              00000006
 CMIF                              00000006
+COUNT                             00000029
 CREN                              00000004
+CRS_LOCATION_IN_ANIMATION         00000041
 CSRC                              00000007
 CSR_LOC                           0000007C
 CURRENT_CHAR                      00000026
@@ -661,9 +852,10 @@ CVRR                              00000005
 D                                 00000005
 DATA_ADDRESS                      00000005
 DC                                00000001
-DELAY_W                           0000006F
-DISPLAY_CURRENT_CHAR              000000BC
-DONE                              0000010A
+DELAY_W                           00000068
+DELAY_W_10_MS                     00000076
+DISPLAY_CURRENT_CHAR              000000C2
+DONE                              00000175
 D_A                               00000005
 EEADR                             0000010D
 EEADRH                            0000010F
@@ -676,24 +868,25 @@ EEIF                              00000004
 EEPGD                             00000007
 F                                 00000001
 FERR                              00000002
+FINISH_STRING                     00000115
 FSR                               00000004
 GCEN                              00000007
 GIE                               00000007
 GO                                00000002
 GO_DONE                           00000002
 I2C_DATA                          00000005
-I2C_READ                          00000002
-I2C_START                         00000003
-I2C_STOP                          00000004
-IBF                               00000007
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 13
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 16
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+IBF                               00000007
 IBOV                              00000005
-INCREMENT_CURRENT_CHAR            000000F6
+INCREMENT_CURRENT_CHAR            000000FC
 INDF                              00000000
 INIT_DEBUG_PORT                   00000046
 INTCON                            0000000B
@@ -703,14 +896,14 @@ INTF                              00000001
 IRP                               00000007
 ISR_FOR_BTN                       00000028
 ISR_FOR_TIMER                     00000016
-LABEL_REACH                       00000061
-LCD_CUSROR                        00000022
 LCD_E_PIN                         00000005
 LCD_RS_PIN                        00000004
-LCD_WRITE_PROMPT                  000000C5
-LP                                0000007B
-MOVE_CURSOR_TO_LINE_2_WRITE_A     000000B6
-MOVE_TO_NEXT_CHAR                 000000F8
+LCD_WRITE_PROMPT                  000000CB
+LP                                00000081
+MAX_CHARS                         00000002
+MOVE_CURSOR_TO_LINE_2_WRITE_A     000000BC
+MOVE_TO_NEXT_CHAR                 000000FE
+MOVING_LOOP                       00000130
 NOT_A                             00000005
 NOT_ADDRESS                       00000005
 NOT_BO                            00000000
@@ -741,16 +934,16 @@ PEN                               00000002
 PIE1                              0000008C
 PIE2                              0000008D
 PIR1                              0000000C
-PIR2                              0000000D
-PORTA                             00000005
-PORTB                             00000006
-PORTC                             00000007
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 14
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 17
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+PIR2                              0000000D
+PORTA                             00000005
+PORTB                             00000006
+PORTC                             00000007
 PORTD                             00000008
 PORTE                             00000009
 PR2                               00000092
@@ -761,10 +954,10 @@ PSA                               00000003
 PSPIE                             00000007
 PSPIF                             00000007
 PSPMODE                           00000004
-PULSE_LCD_E_PIN                   0000007F
+PULSE_LCD_E_PIN                   00000085
 Point                             00000073
-PulseWriteCharToLCD               000000A7
-PulseWriteCmdToLCD                00000099
+PulseWriteCharToLCD               000000AD
+PulseWriteCmdToLCD                0000009F
 R                                 00000002
 RBIE                              00000003
 RBIF                              00000000
@@ -777,6 +970,8 @@ RCIF                              00000005
 RCREG                             0000001A
 RCSTA                             00000018
 RD                                00000000
+REACHED_LINE_END                  0000013C
+REACHED_LINE_END_LOOP             0000016A
 READ_WRITE                        00000002
 RESET_TIMER                       0000000C
 RP0                               00000005
@@ -788,7 +983,7 @@ R_W                               00000002
 S                                 00000003
 SEN                               00000000
 SETUP_INTERRUPTS                  00000039
-SETUP_LCD                         00000084
+SETUP_LCD                         0000008A
 SETUP_PORTS_DIGITAL               00000030
 SKIP1                             00000025
 SMP                               00000007
@@ -798,18 +993,18 @@ SREN                              00000005
 SSPADD                            00000093
 SSPBUF                            00000013
 SSPCON                            00000014
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 SSPCON2                           00000091
 SSPEN                             00000005
 SSPIE                             00000003
 SSPIF                             00000003
 SSPM0                             00000000
 SSPM1                             00000001
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 15
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 SSPM2                             00000002
 SSPM3                             00000003
 SSPOV                             00000006
@@ -833,7 +1028,7 @@ T2CKPS1                           00000001
 T2CON                             00000012
 TEMP                              00000075
 TEMP2                             00000076
-TEST_CHECK_TO_MOVE                000000F0
+TEST_CHECK_TO_MOVE                000000F6
 TIMER_INDEX                       00000028
 TMR0                              00000001
 TMR0IE                            00000005
@@ -857,18 +1052,18 @@ TRISB                             00000086
 TRISC                             00000087
 TRISD                             00000088
 TRISE                             00000089
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 19
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TRISE0                            00000000
 TRISE1                            00000001
 TRISE2                            00000002
 TRMT                              00000001
 TX8_9                             00000006
 TX9                               00000006
-MPASM 5.87                          MAIN.ASM   2-12-2023  22:03:20         PAGE 16
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TX9D                              00000000
 TXD8                              00000000
 TXEN                              00000005
@@ -911,12 +1106,18 @@ _WRT_OFF                          00003FFF
 _XT_OSC                           00003FFD
 __16F877A                         00000001
 blinkDelay                        00000050
-currentCharReg                    00000023
-loop_start                        00000070
-onems                             00000079
+loop_start                        00000069
+lp_st                             00000078
+onems                             0000007F
+
+MPASM 5.87                          MAIN.ASM   2-12-2023  23:34:23         PAGE 20
+
+
+
+
 
 Errors   :     0
 Warnings :     0 reported,     0 suppressed
-Messages :    13 reported,     0 suppressed
+Messages :    14 reported,     0 suppressed
 
 
