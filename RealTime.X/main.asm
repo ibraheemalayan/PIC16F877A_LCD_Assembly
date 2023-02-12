@@ -31,6 +31,8 @@ currentCharReg	EQU	0x23;
 CURRENT_CHAR EQU 0x26
 CURRENT_CHAR_INDEX EQU 0x27
 TIMER_INDEX		   EQU 0x28
+
+STRINGLEN		   EQU 0x51
 ; ---------------------------------
 ; ----------- Code Area -----------
 ; ---------------------------------
@@ -74,9 +76,16 @@ ISR_FOR_TIMER
 
 	CALL	MOVE_TO_NEXT_CHAR_IN_ARRAY
 	MOVLW	8
-	MOVF	TIMER_INDEX	
+	BANKSEL TIMER_INDEX
+	MOVWF	TIMER_INDEX
+	BANKSEL	CURRENT_CHAR
+	MOVF CURRENT_CHAR, W
+	SUBLW 0x21 ; ASCII Of Space + 1	
+	BTFSS	STATUS, Zero
+	GOTO	SKIP1
+	CALL	FINISH_STRING
 
-skip1
+SKIP1
     BCF 	PIR1,TMR1IF     ; clear the TMR1 ov flag 
 	BCF		INTCON,INTF		; clear the External Interrupt Flag bit
     RETFIE
