@@ -503,8 +503,13 @@ MOVE_TO_NEXT_CHAR
 
 	INCF CURRENT_CHAR_INDEX, 1
 
-	MOVLW 'A'
-	MOVWF CURRENT_CHAR ; move A to current char
+	MOVF CURRENT_CHAR, W
+	SUBLW 0x20 ; ASCII Of Space + 1
+
+	BTFSC STATUS, Z ; Test zero & skip
+    GOTO	FINISH_STRING
+
+	
 
 	MOVLW	0x14 ; shift cursor to right
 	CALL	PulseWriteCmdToLCD ; send command
@@ -516,6 +521,11 @@ MOVE_TO_NEXT_CHAR
 	CLRW 
 
 	BCF STATUS, Z
+
+	MOVLW 0x41
+	MOVWF CURRENT_CHAR ; move A to current char
+
+	
 
 	MOVF COUNT, W
 	SUBLW MAX_CHARS
