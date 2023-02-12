@@ -38,7 +38,10 @@ C3 EQU 0x37
 C4 EQU 0x38
 C5 EQU 0x39
 
+CURRENT_CHAR_INDEX EQU 0x27
+TIMER_INDEX		   EQU 0x28
 
+STRINGLEN		   EQU 0x51
 ; ---------------------------------
 ; ----------- Code Area -----------
 ; ---------------------------------
@@ -61,10 +64,37 @@ ORG	0x0004 ; ISR
 	GOTO 	ISR_FOR_TIMER
 	GOTO 	ISR_FOR_BTN
 
+RESET_TIMER
+	MOVLW	0
+	BANKSEL	TIMR1L
+	MOVWF	TMR1L
+	MOVWF	TMR1H
+	MOVLW	8
+	BANKSEL	TIMER_INDEX
+	MOVWF	TIMER_INDEX
+	RETURN
+
+
 ISR_FOR_TIMER
 
 ; TODO increment_letter, check if Z, check if space
 
+	BANKSEL	TIMER_INDEX
+	DECFSZ	TIMER_INDEX
+	GOTO	SKIP1
+
+	CALL	MOVE_TO_NEXT_CHAR_IN_ARRAY
+	MOVLW	8
+	BANKSEL TIMER_INDEX
+	MOVWF	TIMER_INDEX
+	BANKSEL	CURRENT_CHAR
+	MOVF CURRENT_CHAR, W
+	SUBLW 0x21 ; ASCII Of Space + 1	
+	BTFSS	STATUS, Zero
+	GOTO	SKIP1
+	CALL	FINISH_STRING
+
+SKIP1
     BCF 	PIR1,TMR1IF     ; clear the TMR1 ov flag 
 	BCF		INTCON,INTF		; clear the External Interrupt Flag bit
     RETFIE
@@ -101,13 +131,19 @@ SETUP_PORTS_DIGITAL
 
 SETUP_INTERRUPTS
 
-	BANKSEL TRISB
+	BANKSEL TRISB	
 
 	BSF TRISB, 0x00 ; Set Port B Direction To Input
 	BSF OPTION_REG, INTEDG ; Rising Edge
 	BCF INTCON,INTF ; Clear Interrupt Flag
 	BSF INTCON,INTE ; Enable RB0 Interrupt Bit 
-	BSF INTCON,GIE ; Enable Global Interrupt Bit  
+	BSF INTCON,GIE ; Enable Global Interrupt Bit
+
+	BANKSEL	T1CON	;setup timer1
+
+	MOVF	T1CON,W
+	IORLW	b'00111001' ; 8 prescale/oscilator enabled/synchronized/internal/timer1enabled
+	MOVWF	T1CON  
 
 	RETURN
 
@@ -118,7 +154,12 @@ INIT_DEBUG_PORT
 	BANKSEL TRISC
 	MOVLW	0x00		; In order to set PORTC Direction to output
 	MOVWF	TRISC
-
+	BANKSEL	T1CON
+	MOVF	T1CON,W
+	IORLW	b'00111001'
+	MOVWF	T1CON
+	MOVLW	8
+	MOVWF	TIMER_INDEX
 	RETURN
 
 
@@ -298,6 +339,10 @@ MOVE_CURSOR_TO_LINE_2_WRITE_A
 	CALL DISPLAY_CURRENT_CHAR
 
 	RETURN
+
+
+
+
 
 DISPLAY_CURRENT_CHAR
 
