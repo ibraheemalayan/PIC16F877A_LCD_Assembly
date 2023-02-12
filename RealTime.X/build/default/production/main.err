@@ -1,0 +1,14 @@
+Warning[205] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 40 : Found directive in column 1. (ORG)
+Warning[203] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 41 : Found opcode in column 1. (NOP)
+Warning[203] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 42 : Found opcode in column 1. (GOTO)
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 51 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 55 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 59 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 76 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[302] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 87 : Register in operand not in bank 0.  Ensure that bank bits are correct.
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 155 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 270 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 272 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 394 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 404 : Using default destination of 1 (file).
+Message[305] C:\QWS\MPLAB\REALTIME\REALTIME.X\MAIN.ASM 429 : Using default destination of 1 (file).

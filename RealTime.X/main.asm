@@ -1,20 +1,23 @@
 	PROCESSOR 16F877A
 	__CONFIG 0x3731 ; Clock = XT 4MHz, standard fuse settings
 	INCLUDE "P16F877A.INC"
-	
 
-; 	Uses GPR 70 - 75 for Lcd
-Timer1	EQU 70		; 1ms count register
-TimerX	EQU 71		; Xms count register
-Var	EQU 72		; Output variable
-Point	EQU 73		; Program table pointer
-Select	EQU 74		; Used to set or clear RS bit
-OutCod	EQU 75		; Temp store for output code
+
+; ----------- Data Area -----------
+
 RS	EQU 1		; Register select output bit
 E	EQU 2		; Enable display input
 
+; 	Uses GPR 70 - 75 for LCD Data
+Timer1	EQU 0x70		; 1ms count register
+TimerX	EQU 0x71		; Xms count register
+Var	EQU 0x72		; Output variable
+Point	EQU 0x73		; Program table pointer
+Select	EQU 0x74		; Used to set or clear RS bit
+OutCod	EQU 0x75		; Temp store for output code
+
+
 counter	EQU 0x20	; Counter register
-COUNTER	EQU 5		; 5 loops
 counterBlink	EQU 0x21; counter FOR Blinking register
 
 LCD_CURSOR	EQU 0x22; LCD_CURSOR register
@@ -27,16 +30,35 @@ WHITE		EQU D'32'	; WHITE space character
 ACHAR		EQU	D'65'; A
 ACHAR		EQU	D'65'; A
 currentCharReg	EQU	0x23;
+TEMP	EQU 0x24; variable for temporar data
 
 
+; ---------------------------------
+; ----------- Code Area -----------
+; ---------------------------------
+
+ORG	0x0000 		; Start of program memory
+NOP			; For ICD mode
+GOTO start_exec
 
 
-; PROGRAM BEGINS ; Default start address 
-	ORG 0
+start_exec
 
-	;INCLUDE	"LCDIS.INC"
+   
 
-	MOVLW	COUNTER		; Load initial value of 5 into W
+	BANKSEL TRISC
+	MOVLW	0x00		; In order to set PORTC Direction to output
+	MOVWF	TRISC
+
+	BANKSEL ADCON1
+	MOVLW	0x06		; Disable A/D Conversion
+	MOVWF	ADCON1
+
+	BANKSEL CMCON 
+	MOVLW	0x07		; Disable Comparator
+	MOVWF	CMCON
+
+	MOVLW	0x5		; Load initial value of 5 into W
 	MOVWF	counter		; Store the value in the counter register
 
 	MOVLW	Location	; Load initial value of Location into W
@@ -44,12 +66,19 @@ currentCharReg	EQU	0x23;
 
 	MOVLW	ACHAR		; Load initial value of char 'A' To W
 	MOVWF	currentCharReg	; Store the value in the currentCharReg register
+    
+
 
 ; Initialise Timer0 for push button
 
+	BANKSEL OPTION_REG
+	
 	MOVLW	b'11011000'	; TMR0 initialisation code
 	MOVWF	OPTION_REG		; Int clock, no prescale	
-	BANKSEL	PORTD		; Select bank 0
+	
+	CALL LABEL_REACH ; announce reaching this line
+
+	BANKSEL	INTCON		; Select bank 0
 	MOVLW	b'10100000'	; INTCON init. code
 	MOVWF	INTCON		; Enable TMR0 interrupt
 
@@ -61,9 +90,10 @@ currentCharReg	EQU	0x23;
 	BANKSEL PORTD ; Select bank 0
 	CLRF PORTD ; Clear display outputs
 
+
 ;Port B defaults to inputs for the push button :using pin 1
 
-	CALL	inid ; Initialise the display FOR LCD
+	CALL	initialize_display ; Initialise the display FOR LCD
 	CALL	PUTEnterStringOnLCD
 
 
@@ -89,7 +119,43 @@ ENDMOVING
 	MOVLW	D'5'		; Load 5 into W
 	MOVWF	counter		; Store the value 5 to the counter register to start again
 	CALL	PUTEnterStringOnLCD
-	
+
+; used to announce reaching a section of the code
+LABEL_REACH
+
+    BANKSEL PORTC
+    
+	MOVLW	0x80 ; set delay loop to 60 iterations
+
+	BSF PORTC,0
+	CALL DELAY_W
+	BSF PORTC,1
+	CALL DELAY_W
+	BSF PORTC,2
+	CALL DELAY_W
+	BSF PORTC,3
+	CALL DELAY_W
+
+	MOVLW	0xFF ; set delay loop to 255 iteration
+
+	CALL DELAY_W
+
+	BCF PORTC,0
+	BCF PORTC,1
+	BCF PORTC,2
+	BCF PORTC,3
+
+	CALL DELAY_W
+
+	GOTO LABEL_REACH ; loop for ever
+
+; 200 instructions delay
+DELAY_W	
+	MOVWF	TEMP
+loop_start	NOP
+		DECFSZ	TEMP
+		GOTO	loop_start
+		RETURN
 
 MOVERIGHTONLCD
 	BSF Select,RS ; Set to data mode
@@ -375,7 +441,7 @@ send	MOVWF	OutCod		; Store output code
 ;	Initialise the display
 ;	Uses Send
 ;--------------------------------------------------------------
-inid	MOVLW	D'100'		; Load count for 100ms delay
+initialize_display	MOVLW	D'100'		; Load count for 100ms delay
 	CALL	xms		; and wait for display start
 	MOVLW	0F0		; Mask for select code
 	MOVWF	Select		; High nybble not masked
