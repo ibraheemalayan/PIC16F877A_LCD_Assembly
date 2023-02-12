@@ -1,11 +1,11 @@
 MPLINK 5.09, LINKER
-Linker Map File - Created Sun Feb 12 17:23:16 2023
+Linker Map File - Created Sun Feb 12 17:25:02 2023
 
                                  Section Info
                   Section       Type    Address   Location Size(Bytes)
                 ---------  ---------  ---------  ---------  ---------
-                   .org_0       code   0x000000    program   0x00024a
-                   .cinit    romdata   0x000125    program   0x000004
+                   .org_0       code   0x000000    program   0x00024e
+                   .cinit    romdata   0x000127    program   0x000004
 .config_2007_BUILD/DEFAULT/PRODUCTION/MAIN.O       code   0x002007    program   0x000002
 
 
@@ -13,52 +13,52 @@ Linker Map File - Created Sun Feb 12 17:23:16 2023
                               Program Memory Usage 
                                Start         End      
                            ---------   ---------      
-                            0x000000    0x000126      
+                            0x000000    0x000128      
                             0x002007    0x002007      
-            296 out of 8454 program addresses used, program memory utilization is 3%
+            298 out of 8454 program addresses used, program memory utilization is 3%
 
 
 
                               Symbols - Sorted by Name
                      Name    Address   Location    Storage File                     
                 ---------  ---------  ---------  --------- ---------                
-                    BLINK   0x0000ed    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-        CheakForWhitSpace   0x0000bc    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-CheakForWhitSpaceToEndString   0x0000a2    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                CheakForZ   0x0000b5    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    DELAY   0x000104    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               DELAY_LOOP   0x000105    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    BLINK   0x0000ef    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+        CheakForWhitSpace   0x0000be    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+CheakForWhitSpaceToEndString   0x0000a4    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                CheakForZ   0x0000b7    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    DELAY   0x000106    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               DELAY_LOOP   0x000107    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
                   DELAY_W   0x000042    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                     DONE   0x000125    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                     DONE   0x000127    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
                 ENDMOVING   0x00002c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-            INCREMENTCHAR   0x0000b1    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               IsReleased   0x0000cd    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+            INCREMENTCHAR   0x0000b3    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               IsReleased   0x0000cf    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
               LABEL_REACH   0x00002f    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    LOOP1   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-           LOOPTOLOCATION   0x000086    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-          LOOPTOLOCATION1   0x000099    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-              LOOPtoIndex   0x00008a    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                       LP   0x00010c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    LOOP1   0x00009d    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+           LOOPTOLOCATION   0x000088    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+          LOOPTOLOCATION1   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+              LOOPtoIndex   0x00008c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                       LP   0x00010e    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
                      MAIN   0x000021    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
             MOVELEFTONLCD   0x000059    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
            MOVERIGHTONLCD   0x000047    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                MOVETOLCD   0x0000c4    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                MOVETOLCD   0x0000c6    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
              MovingSTRING   0x000027    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                PINSTABLE   0x0000c8    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                   PRESED   0x0000ae    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-          PULSE_LCD_E_PIN   0x000110    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                PINSTABLE   0x0000ca    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                   PRESED   0x0000b0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+          PULSE_LCD_E_PIN   0x000112    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
       PUTEnterStringOnLCD   0x00006b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-      PulseWriteCharToLCD   0x0000de    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-       PulseWriteCmdToLCD   0x0000d0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                SETUP_LCD   0x000115    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                     SKIP   0x0000c3    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-             SKIPtoNormal   0x0000ab    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                  TIMER2S   0x000096    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               WaitButton   0x000099    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+      PulseWriteCharToLCD   0x0000e0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+       PulseWriteCmdToLCD   0x0000d2    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                SETUP_LCD   0x000117    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                     SKIP   0x0000c5    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+             SKIPtoNormal   0x0000ad    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                  TIMER2S   0x000098    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               WaitButton   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
                loop_start   0x000043    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    onems   0x00010a    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    onems   0x00010c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
                start_exec   0x000002    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                  waitINT   0x0000ca    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                  waitINT   0x0000cc    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
 
 
 
@@ -75,32 +75,32 @@ CheakForWhitSpaceToEndString   0x0000a2    program     static C:\qws\MPLAB\RealT
            MOVERIGHTONLCD   0x000047    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
             MOVELEFTONLCD   0x000059    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
       PUTEnterStringOnLCD   0x00006b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-           LOOPTOLOCATION   0x000086    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-              LOOPtoIndex   0x00008a    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                  TIMER2S   0x000096    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-          LOOPTOLOCATION1   0x000099    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               WaitButton   0x000099    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    LOOP1   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-CheakForWhitSpaceToEndString   0x0000a2    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-             SKIPtoNormal   0x0000ab    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                   PRESED   0x0000ae    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-            INCREMENTCHAR   0x0000b1    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                CheakForZ   0x0000b5    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-        CheakForWhitSpace   0x0000bc    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                     SKIP   0x0000c3    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                MOVETOLCD   0x0000c4    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                PINSTABLE   0x0000c8    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                  waitINT   0x0000ca    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               IsReleased   0x0000cd    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-       PulseWriteCmdToLCD   0x0000d0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-      PulseWriteCharToLCD   0x0000de    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    BLINK   0x0000ed    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    DELAY   0x000104    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-               DELAY_LOOP   0x000105    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                    onems   0x00010a    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                       LP   0x00010c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-          PULSE_LCD_E_PIN   0x000110    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                SETUP_LCD   0x000115    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
-                     DONE   0x000125    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+           LOOPTOLOCATION   0x000088    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+              LOOPtoIndex   0x00008c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                  TIMER2S   0x000098    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+          LOOPTOLOCATION1   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               WaitButton   0x00009b    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    LOOP1   0x00009d    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+CheakForWhitSpaceToEndString   0x0000a4    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+             SKIPtoNormal   0x0000ad    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                   PRESED   0x0000b0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+            INCREMENTCHAR   0x0000b3    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                CheakForZ   0x0000b7    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+        CheakForWhitSpace   0x0000be    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                     SKIP   0x0000c5    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                MOVETOLCD   0x0000c6    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                PINSTABLE   0x0000ca    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                  waitINT   0x0000cc    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               IsReleased   0x0000cf    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+       PulseWriteCmdToLCD   0x0000d2    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+      PulseWriteCharToLCD   0x0000e0    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    BLINK   0x0000ef    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    DELAY   0x000106    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+               DELAY_LOOP   0x000107    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                    onems   0x00010c    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                       LP   0x00010e    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+          PULSE_LCD_E_PIN   0x000112    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                SETUP_LCD   0x000117    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
+                     DONE   0x000127    program     static C:\qws\MPLAB\RealTime\RealTime.X\main.asm
 
 

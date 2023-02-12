@@ -246,6 +246,9 @@ PUTEnterStringOnLCD
 	MOVLW 'g';
 	CALL PulseWriteCharToLCD;
 
+	MOVLW ':';
+	CALL PulseWriteCharToLCD;
+
 	RETURN
 	
 	
