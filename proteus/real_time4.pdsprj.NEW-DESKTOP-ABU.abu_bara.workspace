@@ -1,15 +1,14 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <WORKSPACE>
- <FRAME activewindow="1">
-  <PLACEMENT>2c0000000200000003000000ffffffffffffffffffffffffffffffffec000000180000000c07000008040000</PLACEMENT>
+ <FRAME activewindow="0">
+  <PLACEMENT>2c00000002000000030000000083ffff0083ffffffffffffffffffffec000000180000000c07000008040000</PLACEMENT>
   <WINDOW type="default" module="ISIS"/>
-  <WINDOW type="default" module="VSMDEBUG"/>
  </FRAME>
  <MODULE name="VSMDEBUG">
   <PWI>
-   <POPUP w="800" x="38" flags="00000002" y="125" h="200" pid="0" iid="-1">
+   <POPUP w="1104" x="273" flags="00000002" y="466" h="424" pid="0" iid="-1">
     <PROPERTIES>
-     <ITEM name="Message Column Width">550</ITEM>
+     <ITEM name="Message Column Width">975</ITEM>
      <ITEM name="ShowGrid">No</ITEM>
      <ITEM name="Source Column Width">100</ITEM>
      <ITEM name="Time Column Width">120</ITEM>
@@ -69,7 +68,7 @@
    <POPUP w="114" x="158" flags="00000008" y="245" h="127" pid="7" iid="1">
     <PROPERTIES/>
    </POPUP>
-   <POPUP w="8" x="178" flags="80000002" y="265" h="8" pid="8" iid="1">
+   <POPUP w="8" x="178" flags="00000002" y="265" h="8" pid="8" iid="1">
     <PROPERTIES>
      <ITEM name="DataType">2</ITEM>
      <ITEM name="DispChars">Yes</ITEM>
