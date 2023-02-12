@@ -1,4 +1,4 @@
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  1
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -30,11 +30,11 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
   000000C0            00021 Location        EQU 0xC0; counter for LCD_CURSOR
   00000050            00022 blinkDelay      EQU 0x50; Delay time for cursor blink :can be adjusted as needed
                       00023 
-  00000124            00024 CURSOR          EQU 124 ; CURSOR: "  |  "
-  00000032            00025 WHITE           EQU 32  ; WHITE space character
+  0000007C            00024 CURSOR          EQU D'124'      ; CURSOR: "  |  "
+  00000020            00025 WHITE           EQU D'32'       ; WHITE space character
                       00026 
-  00000065            00027 ACHAR           EQU     65; A
-  00000065            00028 ACHAR           EQU     65; A
+  00000041            00027 ACHAR           EQU     D'65'; A
+  00000041            00028 ACHAR           EQU     D'65'; A
   00000023            00029 currentCharReg  EQU     0x23;
                       00030 
                       00031 
@@ -51,13 +51,13 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0002   30C0           00042         MOVLW   Location        ; Load initial value of Location into W
 0003   00A2           00043         MOVWF   LCD_CURSOR      ; Store the value in the LCD_CURSOR register
                       00044 
-0004   3065           00045         MOVLW   ACHAR           ; Load initial value of char 'A' To W
+0004   3041           00045         MOVLW   ACHAR           ; Load initial value of char 'A' To W
 0005   00A3           00046         MOVWF   currentCharReg  ; Store the value in the currentCharReg register
                       00047 
                       00048 ; Initialise Timer0 for push button
                       00049 
 0006   30D8           00050         MOVLW   b'11011000'     ; TMR0 initialisation code
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  2
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -116,7 +116,7 @@ Message[302]: Register in operand not in bank 0.  Ensure that bank bits are corr
                       00099         ; CALL read ; Read the value at that address
 0026   00F5           00100         MOVWF OutCod ; Store the value in OutCod
 0027   10F4           00101         BCF Select,RS ; Set to command mode
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  3
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -175,7 +175,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0054   3020           00152         MOVLW ' ';
 0055   2???           00153         CALL send;
 0056   3053           00154         MOVLW 'S';
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  4
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  4
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -234,7 +234,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 0078   1C86           00203         BTFSS   PORTB,1         ; Test button
 0079   2???           00204         GOTO    PRESED  
 Message[305]: Using default destination of 1 (file).
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  5
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  5
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -293,7 +293,7 @@ Message[305]: Using default destination of 1 (file).
 009C   3041           00252         MOVLW   'A'             ; Load the ASCII value of 'A' into W
 009D   00A3           00253         MOVWF   currentCharReg  ; Move W into currentCharReg
 009E   2???           00254         GOTO    MOVETOLCD       
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  6
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  6
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -338,8 +338,7 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
 00B1   00A2           00290         MOVWF   LCD_CURSOR      ; Selection Location
 00B2   2???           00291         CALL    send            ; send command 
 00B3   14F4           00292         BSF     Select,RS       ; data mode
-Warning[202]: Argument out of range.  Least significant bits used.
-00B4   3024           00293         MOVLW   CURSOR          ; |
+00B4   307C           00293         MOVLW   CURSOR          ; |
 00B5   2???           00294         CALL    send            ; send CURSOR
                       00295         
                       00296 
@@ -352,13 +351,13 @@ Warning[202]: Argument out of range.  Least significant bits used.
 00BB   00A2           00303         MOVWF   LCD_CURSOR      ; Selection Location
 00BC   2???           00304         CALL    send            ; send command 
 00BD   14F4           00305         BSF     Select,RS       ; data mode
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  7
+00BE   3020           00306         MOVLW   WHITE           ; 
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  7
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00BE   3032           00306         MOVLW   WHITE           ; 
 00BF   2???           00307         CALL    send            ; WHITE
 00C0   1886           00308         BTFSC   PORTB,1         ; Test button
 00C1   2???           00309         GOTO    BLINK           ; Loop back
@@ -411,13 +410,13 @@ Message[305]: Using default destination of 1 (file).
                       00353 ;       Send a command byte in two nibbles from RB4 - RB7
                       00354 ;       Receives command in W, uses PulseE and Onems
                       00355 ;--------------------------------------------------------------
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  8
+00D9   00F5           00356 send    MOVWF   OutCod          ; Store output code
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  8
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00D9   00F5           00356 send    MOVWF   OutCod          ; Store output code
 00DA   39F0           00357         ANDLW   0F0             ; Clear low nybble
 00DB   0088           00358         MOVWF   PORTD           ; Output high nybble
 00DC   18F4           00359         BTFSC   Select,RS       ; Test RS bit
@@ -470,24 +469,24 @@ Message[305]: Using default destination of 1 (file).
 0102   2???           00405         CALL    send            ; and send code
                       00406 
 0103   0008           00407         RETURN                  ; Done
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE  9
+                      00408 
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE  9
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00408 
                       00409 ;--------------------------------------------------------------End LCD CODE-----------------------------
                             --------
 0104                  00410 DONE
 3731                  00411         END
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 10
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 10
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-ACHAR                             00000065
+ACHAR                             00000041
 ACKDT                             00000005
 ACKEN                             00000004
 ACKSTAT                           00000006
@@ -540,7 +539,7 @@ CHS2                              00000005
 CIS                               00000003
 CKE                               00000006
 CKP                               00000004
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 11
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 11
 
 
 SYMBOL TABLE
@@ -555,7 +554,7 @@ CMIF                              00000006
 COUNTER                           00000005
 CREN                              00000004
 CSRC                              00000007
-CURSOR                            00000124
+CURSOR                            0000007C
 CVR0                              00000000
 CVR1                              00000001
 CVR2                              00000002
@@ -599,7 +598,7 @@ I2C_STOP                          00000004
 IBF                               00000007
 IBOV                              00000005
 INCREMENTCHAR                     0000008D
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 12
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 12
 
 
 SYMBOL TABLE
@@ -658,7 +657,7 @@ PIR1                              0000000C
 PIR2                              0000000D
 PORTA                             00000005
 PORTB                             00000006
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 13
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 13
 
 
 SYMBOL TABLE
@@ -717,7 +716,7 @@ SSPM0                             00000000
 SSPM1                             00000001
 SSPM2                             00000002
 SSPM3                             00000003
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 14
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 14
 
 
 SYMBOL TABLE
@@ -776,7 +775,7 @@ TXEN                              00000005
 TXIE                              00000004
 TXIF                              00000004
 TXREG                             00000019
-MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:22:55         PAGE 15
+MPASM 5.87              NEWPIC_8B_SIMPLE.ASM   2-12-2023  14:35:26         PAGE 15
 
 
 SYMBOL TABLE
@@ -789,7 +788,7 @@ UA                                00000001
 Var                               00000072
 W                                 00000000
 WCOL                              00000007
-WHITE                             00000032
+WHITE                             00000020
 WR                                00000001
 WREN                              00000002
 WRERR                             00000003
@@ -832,7 +831,7 @@ waitINT                           000000A6
 xms                               000000CF
 
 Errors   :     0
-Warnings :     1 reported,     0 suppressed
+Warnings :     0 reported,     0 suppressed
 Messages :     7 reported,     0 suppressed
 
 
