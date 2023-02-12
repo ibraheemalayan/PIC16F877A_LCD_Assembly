@@ -7,7 +7,7 @@
 
 LCD_RS_PIN	EQU 4		; Register select output bit
 LCD_E_PIN	EQU 5		; Enable display input
-MAX_CHARS	EQU 2
+MAX_CHARS	EQU 5
 
 
 ; 	Uses GPR 70 - 75 for LCD Data
@@ -19,6 +19,8 @@ Point	EQU 0x73		; Program table pointer
 
 TEMP	EQU 0x75		; Temp store
 TEMP2	EQU 0x76		; Temp2 store
+
+RESET_PROG	EQU 0x77		; resets program
 
 blinkDelay	EQU 0x50; Delay time for cursor blink :can be adjusted as needed
 
@@ -63,7 +65,7 @@ RESET_TIMER
 	BANKSEL	TMR1L
 	MOVWF	TMR1L
 	MOVWF	TMR1H
-	MOVLW	0x7f
+	MOVLW	0x02
 	BANKSEL	TIMER_INDEX
 	MOVWF	TIMER_INDEX
 	RETURN
@@ -99,7 +101,7 @@ ISR_FOR_BTN
     CALL INCREMENT_CURRENT_CHAR
     CALL CHECK_IF_Z
 	CALL CHECK_IF_SPACE
-	CALL TEST_CHECK_TO_MOVE
+	; CALL TEST_CHECK_TO_MOVE
 
 
 	CALL DISPLAY_CURRENT_CHAR
@@ -524,6 +526,20 @@ MOVE_TO_NEXT_CHAR
 
 
     RETURN
+
+CHECK_RESET
+
+   MOVLW C1
+   MOVWF CURRENT_CHAR_INDEX
+
+   CLRF COUNT
+   CLRF C1
+   CLRF C2
+   CLRF C3
+   CLRF C4
+   CLRF C5
+   
+   RETFIE
 
 FINISH_STRING
 
